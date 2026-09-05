@@ -17,7 +17,7 @@ Outputs never replace existing files or directories. File outputs use same-files
 
 Input trees and output parent directories must be under your control while a job runs. Concurrent edits to input files and hostile directory replacement are outside the supported contract. Sources are never deleted. A failed or interrupted process can leave temporary storage after an uncatchable kill, but incomplete files are not published under requested output names.
 
-`-j N` runs 1 to 32 workers. Results retain discovery order. Progress is plain, complete lines on stderr. `-q` hides progress. JSON on stdout escapes control characters in filenames. `-S PATH` and `-L PATH` write new JSON reports and refuse existing paths. Reports are explicit writes even for inspection tools. A report publication failure makes the command fail.
+`-j N` runs 1 to 32 workers, with at most twice that many operations submitted at once. Results retain discovery order. Discovery and JSON reports still retain the full file list in memory. Progress is plain, complete lines on stderr. `-q` hides progress. JSON on stdout escapes control characters in filenames. `-S PATH` and `-L PATH` write new JSON reports and refuse existing paths. Reports are explicit writes even for inspection tools. A report publication failure makes the command fail.
 
 Exit codes: **0** success, **1** operation or verification failure, **2** usage or missing dependency. Optional codec/delegate failures return 1 with encoder diagnostics. No ANSI output or spinners are used.
 
@@ -33,11 +33,17 @@ Config is data and never executed as shell code. Reports are explicitly located 
 
 ## Hash manifests
 
-`hash-manifest` emits the standard response envelope. Save its `results` array as the manifest accepted by `hash-verify`:
+`hash-manifest` emits the standard response envelope, which `hash-verify` accepts directly:
 
 ```bash
-bin/archiving-utils hash-manifest ./library | python3 -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["results"]))' > manifest.json
+bin/archiving-utils hash-manifest ./library > manifest.json
 bin/archiving-utils hash-verify --manifest manifest.json ./library
 ```
 
+Existing manifests containing only the `results` array remain supported. Verification rejects malformed entries, failed response envelopes, non-relative paths, duplicate paths, and invalid SHA-256 values. Hexadecimal checksums may use either case. Generation rejects duplicate relative paths across input roots before hashing.
+
 Keep the manifest outside the scanned tree. Verification checks the full path set and every SHA-256 hash. Use one root with unique relative paths. `tree-diff` reports differences as data and returns success when the comparison itself completed.
+
+## Duplicate detection
+
+`library-dupes` first groups files by byte size and hashes only files whose size occurs more than once. Same-size files still require matching full SHA-256 hashes. Results preserve discovery order and never delete or modify files.

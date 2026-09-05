@@ -2,9 +2,11 @@
 
 import argparse
 import concurrent.futures
+from collections import Counter, deque
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import subprocess
@@ -221,6 +223,59 @@ def load_args(tool, argv):
     return args
 
 
+def manifest_entries(path):
+    """Accept a saved CLI response or the original bare manifest array."""
+    data = json.loads(path.read_text())
+    if isinstance(data, dict):
+        if data.get("tool") != "hash-manifest" or data.get("failures") != []:
+            raise ValueError("manifest must be a successful hash-manifest response")
+        data = data.get("results")
+    if not isinstance(data, list):
+        raise ValueError("manifest must contain an array of entries")
+    seen = set()
+    for entry in data:
+        if not isinstance(entry, dict):
+            raise ValueError("manifest entries must be objects")
+        name, checksum = entry.get("path"), entry.get("sha256")
+        if (
+            not isinstance(name, str)
+            or not name
+            or "\x00" in name
+            or any(part in ("", ".", "..") for part in name.split("/"))
+        ):
+            raise ValueError("manifest paths must be unambiguous relative file paths")
+        if name in seen:
+            raise ValueError("ambiguous duplicate relative paths in manifest")
+        seen.add(name)
+        if not isinstance(checksum, str) or not re.fullmatch(
+            r"[0-9a-fA-F]{64}", checksum
+        ):
+            raise ValueError("manifest SHA-256 must contain 64 hexadecimal characters")
+        if "bytes" in entry and (type(entry["bytes"]) is not int or entry["bytes"] < 0):
+            raise ValueError("manifest bytes must be a nonnegative integer")
+    return {entry["path"]: entry["sha256"].lower() for entry in data}
+
+
+def ordered_work(pool, function, items, limit):
+    """Keep at most limit futures outstanding while preserving input order."""
+    items = iter(items)
+    pending = deque()
+    try:
+        for _ in range(limit):
+            item = next(items, None)
+            if item is None:
+                break
+            pending.append(pool.submit(function, item))
+        while pending:
+            yield pending.popleft().result()
+            item = next(items, None)
+            if item is not None:
+                pending.append(pool.submit(function, item))
+    finally:
+        for future in pending:
+            future.cancel()
+
+
 def common(tool, files, args):
     op = tool["operation"]
     if op == "inventory":
@@ -229,21 +284,25 @@ def common(tool, files, args):
             for p, rel in files
         ]
     if op == "duplicates":
+        sizes = {p: p.stat().st_size for p, _ in files}
+        counts = Counter(sizes.values())
         groups = {}
         for p, _ in files:
-            groups.setdefault(digest(p), []).append(str(p))
+            if counts[sizes[p]] > 1:
+                groups.setdefault(digest(p), []).append(str(p))
         return [{"sha256": h, "paths": ps} for h, ps in groups.items() if len(ps) > 1]
     if op == "manifest":
+        if len({str(rel) for _, rel in files}) != len(files):
+            raise ValueError("ambiguous duplicate relative paths")
         return [
             {"path": str(rel), "sha256": digest(p), "bytes": p.stat().st_size}
             for p, rel in files
         ]
     if op == "hash-verify":
-        entries = json.loads(args.manifest.read_text())
-        expected = {e["path"]: e["sha256"] for e in entries}
-        actual = {str(rel): digest(p) for p, rel in files}
-        if len(expected) != len(entries) or len(actual) != len(files):
+        expected = manifest_entries(args.manifest)
+        if len({str(rel) for _, rel in files}) != len(files):
             raise ValueError("ambiguous duplicate relative paths")
+        actual = {str(rel): digest(p) for p, rel in files}
         result = [
             {"path": name, "ok": expected.get(name) == actual.get(name)}
             for name in sorted(expected.keys() | actual.keys())
@@ -353,7 +412,9 @@ def execute(tool, args):
 
     records = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as pool:
-        for index, record in enumerate(pool.map(one, range(len(files)))):
+        for index, record in enumerate(
+            ordered_work(pool, one, range(len(files)), 2 * args.jobs)
+        ):
             records.append(record)
             if not args.quiet:
                 print(

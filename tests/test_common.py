@@ -1,6 +1,8 @@
 """Shared behavior tests using only isolated disposable trees."""
 
 import json
+import concurrent.futures
+from unittest import mock
 import os
 from pathlib import Path
 import subprocess
@@ -84,6 +86,89 @@ class Common(Fixture):
         rows = json.loads(self.cli("library-dupes", self.inputs).stdout)["results"]
         self.assertEqual(len(rows), 1)
         self.assertEqual(len(rows[0]["paths"]), 2)
+
+    def test_duplicates_skip_unique_sizes(self):
+        first = self.file("one", b"same")
+        second = self.file("two", b"same")
+        self.file("unique", b"long unique content")
+        self.file("same-size-different", b"else")
+        tool = next(t for t in core.catalog() if t["operation"] == "duplicates")
+        with mock.patch.object(core, "digest", wraps=core.digest) as hashed:
+            rows = core.common(tool, core.discover([self.inputs]), None)
+        self.assertEqual(hashed.call_count, 3)
+        self.assertEqual(rows[0]["paths"], [str(first), str(second)])
+        self.assertEqual(len(rows), 1)
+
+    def test_manifest_response_roundtrip(self):
+        self.file("nested/unicodé\nfile")
+        manifest = self.work / "manifest.json"
+        manifest.write_text(self.cli("hash-manifest", self.inputs).stdout)
+        self.cli("hash-verify", "--manifest", manifest, self.inputs)
+        self.file("nested/unicodé\nfile", b"modified")
+        self.cli("hash-verify", "--manifest", manifest, self.inputs, code=1)
+
+    def test_manifest_rejects_ambiguous_generation(self):
+        self.file()
+        other = self.work / "other"
+        other.mkdir()
+        (other / "sample.bin").write_bytes(b"another root")
+        result = self.cli("hash-manifest", self.inputs, other, code=1)
+        self.assertIn("ambiguous duplicate relative paths", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_manifest_rejects_bad_schema(self):
+        self.file()
+        valid = {"path": "sample.bin", "sha256": "a" * 64, "bytes": 12}
+        cases = [
+            None,
+            3,
+            "not a manifest",
+            [3],
+            [{}],
+            [dict(valid, path="../escape")],
+            [dict(valid, path="/absolute")],
+            [dict(valid, path="a//b")],
+            [dict(valid, path="./sample.bin")],
+            [dict(valid, sha256="broken")],
+            [dict(valid, bytes=True)],
+            [dict(valid, bytes=-1)],
+            [valid, valid],
+            {"tool": "library-inventory", "results": [], "failures": []},
+            {"tool": "hash-manifest", "results": [], "failures": ["failed"]},
+        ]
+        manifest = self.work / "manifest.json"
+        for data in cases:
+            with self.subTest(data=data):
+                manifest.write_text(json.dumps(data))
+                result = self.cli(
+                    "hash-verify", "--manifest", manifest, self.inputs, code=1
+                )
+                self.assertNotIn("Traceback", result.stderr)
+
+    def test_manifest_accepts_uppercase_checksum(self):
+        self.file()
+        rows = json.loads(self.cli("hash-manifest", self.inputs).stdout)["results"]
+        rows[0]["sha256"] = rows[0]["sha256"].upper()
+        manifest = self.work / "manifest.json"
+        manifest.write_text(json.dumps(rows))
+        self.cli("hash-verify", "--manifest", manifest, self.inputs)
+
+    def test_ordered_work_bounds_input_consumption(self):
+        consumed = 0
+        received = 0
+
+        def items():
+            nonlocal consumed
+            for value in range(100):
+                consumed += 1
+                self.assertLessEqual(consumed - received, 4)
+                yield value
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            for value in core.ordered_work(pool, lambda x: x * 2, items(), 4):
+                self.assertEqual(value, received * 2)
+                received += 1
+        self.assertEqual(received, 100)
 
     def test_manifest_verify_and_mismatch(self):
         source = self.file()
