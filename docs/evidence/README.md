@@ -1,6 +1,6 @@
 # Initial verification evidence
 
-Local validation: `make check`, `actionlint .github/workflows/*.yml`, and `make test-all`. 30 unittest methods pass. Format subtests exercise every catalog conversion. No local dependency skips.
+Local validation: `make check`, `actionlint .github/workflows/*.yml`, and `make test-all`. 30 unittest methods pass. Format subtests exercise every catalog conversion. No local dependency skips. The full suite also passes under Python 3.11, and generated documentation checks pass under both Python 3.11 and 3.14.
 
 [Artifact and browser receipt](validation.json) binds the Archify specification and delivered HTML by SHA-256. Archify passes 9 of 9 artifact checks with zero errors and warnings. Its browser command checks exact desktop viewports at 1440x900, 1600x1000, 1920x1080, and 2048x1320. Light/dark captures were visually reviewed for readable labels, routes, and containment.
 

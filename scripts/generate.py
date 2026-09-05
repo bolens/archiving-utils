@@ -44,6 +44,19 @@ DETAILS = {
 }
 
 
+def cli_reference(tool):
+    """Render parser-owned flags without version-specific argparse layout."""
+    rows = []
+    for action in core.parser(tool)._actions:
+        flags = (
+            " / ".join(action.option_strings) if action.option_strings else action.dest
+        )
+        if action.option_strings and action.nargs != 0:
+            flags += " " + action.dest.upper()
+        rows.append(f"| `{flags}` | {action.help} |")
+    return "## Options\n\n| Argument | Purpose |\n|---|---|\n" + "\n".join(rows) + "\n"
+
+
 def generate():
     suite = ROOT.name
     d = DETAILS[suite]
@@ -78,7 +91,7 @@ def generate():
                 if tool["mode"] == "write"
                 else "Prints JSON to stdout. Does not modify inputs.\n\n"
             )
-            + f"[CLI contract]({up}/docs/cli.md) · [Formats and limits]({up}/docs/formats.md)\n\n```text\n{core.parser(tool).format_help()}```\n"
+            + f"[CLI contract]({up}/docs/cli.md) · [Formats and limits]({up}/docs/formats.md)\n\n{cli_reference(tool)}"
         )
     rows = "\n".join(
         f"| [`{t['name']}`](../{'conversion/' + t['name'] if t['category'] == 'conversion' else 'util/' + t['category'] + '/' + t['name']}/) | {t['category']} | {t['mode']} | {t['description']} |"
