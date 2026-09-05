@@ -1,3 +1,5 @@
+from pathlib import Path
+import json
 import io
 import tarfile
 import zipfile
@@ -6,11 +8,41 @@ from test_common import Fixture
 
 
 class Archive(Fixture):
+    def test_mixed_batch_preserves_success_and_reports_failure(self):
+        source = self.inputs / "good.zip"
+        with zipfile.ZipFile(source, "w") as archive:
+            archive.writestr("kept.bin", b"preserved")
+        corrupt = self.file("00-corrupt.zip", b"invalid input")
+        before = {path: path.read_bytes() for path in (source, corrupt)}
+        for jobs in (1, 2):
+            with self.subTest(jobs=jobs):
+                output = self.work / ("batch-" + str(jobs))
+                success_log = self.work / ("success-" + str(jobs) + ".json")
+                failure_log = self.work / ("failure-" + str(jobs) + ".json")
+                response = json.loads(self.cli(
+                    "archive-extract", "--apply", "-j", jobs, "--output-dir", output,
+                    "-S", success_log, "-L", failure_log, self.inputs, code=1,
+                ).stdout)
+                self.assertEqual([r["path"] for r in response["results"]], [str(source)])
+                self.assertEqual([r["path"] for r in response["failures"]], [str(corrupt)])
+                self.assertEqual(response["results"][0]["status"], "written")
+                self.assertEqual(response["failures"][0]["status"], "failed")
+                self.assertEqual(json.loads(success_log.read_text()), response["results"])
+                self.assertEqual(json.loads(failure_log.read_text()), response["failures"])
+                published = Path(response["results"][0]["output"])
+                self.assertEqual((published / "kept.bin").read_bytes(), b"preserved")
+                self.assertFalse(Path(response["failures"][0]["output"]).exists())
+                self.assertEqual(list(output.iterdir()), [published])
+                for path, original in before.items():
+                    self.assertEqual(path.read_bytes(), original)
+
     def seed(self):
         self.file("space [1]\n.bin", b"data" * 200)
         self.file("-dash.bin", b"more data")
         self.file("empty.bin", b"")
         (self.inputs / "empty-directory").mkdir()
+        self.file("nested/雪 [*]\n.bin", bytes(range(256)))
+        (self.inputs / "nested/empty/deeper").mkdir(parents=True)
 
     def test_exclude_corrupt_archive_from_extraction_batch(self):
         archive = self.inputs / "good.zip"
@@ -33,6 +65,14 @@ class Archive(Fixture):
 
     def test_all_pack_repack_and_reports(self):
         self.seed()
+
+        def snapshot(root):
+            return {
+                p.relative_to(root).as_posix(): None if p.is_dir() else p.read_bytes()
+                for p in root.rglob("*")
+            }
+
+        expected = snapshot(self.inputs)
         for fmt in ("zip", "tar", "tar-gz", "tar-bz2", "tar-xz"):
             with self.subTest(format=fmt):
                 suffix = fmt.replace("-", ".")
@@ -48,10 +88,14 @@ class Archive(Fixture):
                 self.assertEqual(
                     (extracted / "space [1]\n.bin").read_bytes(), b"data" * 200
                 )
-                self.assertTrue((extracted / "empty-directory").is_dir())
+                self.assertEqual(snapshot(extracted), expected)
                 repacked = self.work / ("repacked." + suffix)
                 self.cli("archive-to-" + fmt, "--apply", "--output", repacked, archive)
                 self.cli("archive-verify", repacked)
+                restored = self.work / ("restored-" + fmt)
+                self.cli("archive-extract", "--apply", "-o", restored, repacked)
+                self.assertEqual(snapshot(restored), expected)
+                self.assertEqual(snapshot(self.inputs), expected)
 
     def test_compression_roundtrips(self):
         for payload in (b"compress me" * 1000, b""):
