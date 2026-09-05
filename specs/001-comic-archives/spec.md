@@ -1,6 +1,6 @@
 # Comic archive support
 
-Branch: `001-comic-archives`. Created: 2026-09-05. Status: implementation.
+Branch: `001-comic-archives`. Created: 2026-09-05. Status: implemented and locally validated. PR delivery is tracked separately.
 
 User request: add extensive comic archive support to archiving-utils.
 
