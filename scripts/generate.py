@@ -17,7 +17,7 @@ DETAILS = {
         intro="Package, inspect, compare, and recover local archives. Every compression pipeline checks the round trip before publishing its output.",
         feature="folder-to-tar-xz",
         example="bin/archiving-utils folder-to-tar-xz --output collection.tar.xz --apply ./collection",
-        formats="ZIP · TAR · GZIP · BZIP2 · XZ",
+        formats="CBZ · CBR (READ) · CB7 · CBT · ZIP · TAR · GZIP · BZIP2 · XZ · ZSTD",
         section="The archive cabinet",
         art="archive",
     ),

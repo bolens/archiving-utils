@@ -1,6 +1,6 @@
 # Tool catalog
 
-31 commands. Generated from `lib/catalog.json`.
+48 commands. Generated from `lib/catalog.json`.
 
 | Command | Category | Mode | Purpose |
 |---|---|---|---|
@@ -35,3 +35,20 @@
 | [`archive-verify`](../util/audit/archive-verify/) | audit | read | Check archive structure, member safety, and complete payloads. |
 | [`archive-stats`](../util/audit/archive-stats/) | audit | read | Report member counts, stored size, and expansion ratio. |
 | [`archive-manifest`](../util/audit/archive-manifest/) | audit | read | Print member SHA-256 hashes without extraction. |
+| [`comic-info`](../util/comic/comic-info/) | comic | read | Inventory comic pages in natural filename order, sidecars and member hashes. |
+| [`comic-verify`](../util/comic/comic-verify/) | comic | read | Verify every comic archive payload and report recognized page files. |
+| [`comic-extract`](../util/comic/comic-extract/) | comic | write | Extract all comic pages and sidecars into a new directory without renaming. |
+| [`folder-to-cbz`](../conversion/folder-to-cbz/) | conversion | write | Package a folder as CBZ while preserving member names, bytes and sidecars. |
+| [`comic-to-cbz`](../conversion/comic-to-cbz/) | conversion | write | Convert a comic archive as CBZ while preserving member names, bytes and sidecars. |
+| [`folder-to-cb7`](../conversion/folder-to-cb7/) | conversion | write | Package a folder as CB7 while preserving member names, bytes and sidecars. |
+| [`comic-to-cb7`](../conversion/comic-to-cb7/) | conversion | write | Convert a comic archive as CB7 while preserving member names, bytes and sidecars. |
+| [`folder-to-cbt`](../conversion/folder-to-cbt/) | conversion | write | Package a folder as CBT while preserving member names, bytes and sidecars. |
+| [`comic-to-cbt`](../conversion/comic-to-cbt/) | conversion | write | Convert a comic archive as CBT while preserving member names, bytes and sidecars. |
+| [`folder-to-cbt-gz`](../conversion/folder-to-cbt-gz/) | conversion | write | Package a folder as CBT.GZ while preserving member names, bytes and sidecars. |
+| [`comic-to-cbt-gz`](../conversion/comic-to-cbt-gz/) | conversion | write | Convert a comic archive as CBT.GZ while preserving member names, bytes and sidecars. |
+| [`folder-to-cbt-bz2`](../conversion/folder-to-cbt-bz2/) | conversion | write | Package a folder as CBT.BZ2 while preserving member names, bytes and sidecars. |
+| [`comic-to-cbt-bz2`](../conversion/comic-to-cbt-bz2/) | conversion | write | Convert a comic archive as CBT.BZ2 while preserving member names, bytes and sidecars. |
+| [`folder-to-cbt-xz`](../conversion/folder-to-cbt-xz/) | conversion | write | Package a folder as CBT.XZ while preserving member names, bytes and sidecars. |
+| [`comic-to-cbt-xz`](../conversion/comic-to-cbt-xz/) | conversion | write | Convert a comic archive as CBT.XZ while preserving member names, bytes and sidecars. |
+| [`folder-to-cbt-zst`](../conversion/folder-to-cbt-zst/) | conversion | write | Package a folder as CBT.ZST while preserving member names, bytes and sidecars. |
+| [`comic-to-cbt-zst`](../conversion/comic-to-cbt-zst/) | conversion | write | Convert a comic archive as CBT.ZST while preserving member names, bytes and sidecars. |

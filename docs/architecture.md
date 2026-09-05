@@ -11,3 +11,20 @@ The shared core parses flags and JSON config, discovers regular files, plans des
 `make generate` builds command wrappers, CLI reference pages, the catalog, and `site/index.html`. Site search and theme controls run locally in the browser. The website never accesses media files. GitHub Pages deploys the checked `site/` directory after CI succeeds on main.
 
 The Archify specification is maintained separately from the website generator. `deliver` receipts and browser checks are stored in the documentation evidence directory. Generated HTML stays unchanged after delivery.
+
+Comic commands use the same catalog and domain pipeline. `lib/comics.py` classifies
+page extensions and natural filename order without decoding media or parsing
+sidecars. `lib/archive_backend.py` lazily loads libarchive for RAR/7z/Zstandard and
+streams each entry through the shared member validator. It never calls native
+extract-to-disk functions. Each operation owns its native handle. bsdtar only
+writes validated source trees for CB7/Zstandard; outputs are scanned and compared
+with source file hashes and directory names before no-clobber publication.
+
+`lib/rar5_checksums.py` independently validates bounded RAR5 headers and exposes
+per-member CRC32 values. The streaming reader compares these against decoded
+bytes before any staged output is published. This avoids relying on the native
+stored-RAR5 checksum path. CRC-less RAR5 files are refused explicitly.
+
+RAR4 uses `lib/rar4_headers.py` for header CRCs, volume/split refusal and per-file
+CRC32. Both RAR generations compare decoded bytes against independent checksums.
+The native reader enables only the detected format; Zstandard is limited to TAR.

@@ -4,7 +4,7 @@ List members with sizes and SHA-256 hashes.
 
 Mode: **read**. Operation: `list`.
 
-Source extensions: `.zip`, `.tar`, `.tar.gz`, `.tgz`, `.tar.bz2`, `.tbz2`, `.tar.xz`, `.txz`.
+Source extensions: `.zip`, `.tar`, `.tar.gz`, `.tgz`, `.tar.bz2`, `.tbz2`, `.tar.xz`, `.txz`, `.cbz`, `.cbr`, `.cb7`, `.cbt`, `.cbt.gz`, `.cbt.bz2`, `.cbt.xz`, `.cbt.zst`, `.cba`, `.rar`, `.7z`, `.tar.zst`, `.tzst`.
 
 Run from the repository root:
 

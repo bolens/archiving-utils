@@ -6,7 +6,7 @@
 
 Archive tests exercise compression and packaging formats, malicious member paths, links, duplicates, limits, corruption, extraction, and batch collisions.
 
-Archive functional tests use Python standard-library modules and have no optional codec skip tier. The unittest report names every skip. CI installs the core dependencies and retains the report as an artifact. Tests require no personal media and perform no network enrichment.
+Original archive functional tests use Python standard-library modules. Comic native-format tests require libarchive and bsdtar and report an explicit skip when unavailable. CI requires those backends. The unittest report names every skip. CI installs the core dependencies and retains the report as an artifact. Tests require no personal media and perform no network enrichment.
 
 Shared regression tests also cover direct manifest-response round trips, malformed and ambiguous manifests, size-filtered duplicate hashing, and bounded batch submission with stable result ordering.
 
@@ -19,3 +19,18 @@ Publication checks cover writer failure, missing output, rejected verification, 
 Mixed valid/corrupt batches run with one and two workers. Functional checks verify successful output, source retention, absent failed output, nonzero exit status, and matching success/failure reports. These cases run in the existing `make test` and `make test-functional` tiers, and together in `make test-all`.
 
 Archive round-trip checks compare every relative name, file byte, and directory after packing and repacking each ZIP/TAR variant. Fixtures include nested empty directories and Unicode, glob, and newline names.
+
+Comic tests run in `make test-functional` and `make test-all`. They exercise all
+seven creation formats, all 49 conversion pairs, full extraction comparisons,
+RAR4 and stored/compressed RAR5 conversion, extension-based page inventories,
+sidecar retention, source retention, dry runs, collisions, partial batches,
+unsafe paths, native links, encryption, missing volumes, checksum corruption,
+limits and unavailable dependencies. Pinned upstream RAR fixtures and license
+notices live in `tests/fixtures/libarchive`. Test page payloads are opaque synthetic
+bytes because this feature verifies containers, not image decoding.
+
+`make test` also runs dependency-free header tests covering RAR4/RAR5 metadata, CRC-less refusal, zero CRC,
+header checksum errors, truncation, invalid variable integers and missing end
+headers. Native regressions reject stored RAR4 corruption, complete-member volume
+boundaries and Zstandard-wrapped RAR5 corruption before extraction or conversion
+publication. Explicit output filenames cannot override the selected encoder.
