@@ -37,6 +37,8 @@ def main():
             if default_user:
                 i = opts.index('--user')
                 del opts[i:i + 2]
+                if '--userns=keep-id' in opts:
+                    opts.remove('--userns=keep-id')
             if entry:
                 opts += ['--entrypoint', entry]
             result = subprocess.run([args.engine, 'run', *opts, args.image, *map(str, command)],
