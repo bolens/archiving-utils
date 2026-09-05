@@ -1,10 +1,11 @@
 # Tool catalog
 
-30 commands. Generated from `lib/catalog.json`.
+31 commands. Generated from `lib/catalog.json`.
 
 | Command | Category | Mode | Purpose |
 |---|---|---|---|
 | [`library-inventory`](../util/library/library-inventory/) | library | read | List file sizes and relative paths. |
+| [`library-summary`](../util/library/library-summary/) | library | read | Summarize file counts, byte sizes, empty files, and extensions without reading contents. |
 | [`library-dupes`](../util/library/library-dupes/) | library | read | Find exact SHA-256 duplicates without deleting files. |
 | [`hash-manifest`](../util/library/hash-manifest/) | library | read | Print a JSON SHA-256 manifest for the input tree. |
 | [`hash-verify`](../util/library/hash-verify/) | library | read | Verify file presence and hashes against a JSON manifest. |

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `library-summary` to the CLI and read-only MCP server for file counts, total bytes, empty files, size ranges, and extension totals without reading media contents.
+
 - Verify saved `hash-manifest` responses directly, while retaining support for bare entry arrays. Reject malformed manifests and ambiguous relative paths.
 - Skip hashing files with unique byte sizes during duplicate detection.
 - Bound queued batch operations to twice the worker count while preserving report order.

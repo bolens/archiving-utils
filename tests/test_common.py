@@ -79,6 +79,57 @@ class Common(Fixture):
         self.assertEqual({row["relative"] for row in result["results"]}, set(names))
         self.assertFalse((self.work / "SHOULD_NOT_EXIST").exists())
 
+    def test_summary_counts_sizes_and_extensions(self):
+        self.file("one.JPG", b"abc")
+        self.file("nested/two.jpg", b"12345")
+        self.file("archive.tar.gz", b"12")
+        self.file("README", b"")
+        self.file(".hidden", b"x")
+        self.file("trailing.", b"")
+        (self.inputs / "ignored-link.jpg").symlink_to(self.inputs / "one.JPG")
+        response = json.loads(
+            self.cli("library-summary", self.inputs, self.inputs / "nested").stdout
+        )
+        self.assertEqual(response["failures"], [])
+        self.assertEqual(
+            response["results"],
+            [
+                {
+                    "file_count": 6,
+                    "total_bytes": 11,
+                    "empty_files": 2,
+                    "min_bytes": 0,
+                    "max_bytes": 5,
+                    "extensions": [
+                        {"extension": "", "file_count": 3, "total_bytes": 1},
+                        {"extension": ".gz", "file_count": 1, "total_bytes": 2},
+                        {"extension": ".jpg", "file_count": 2, "total_bytes": 8},
+                    ],
+                }
+            ],
+        )
+
+    def test_summary_does_not_read_contents_or_run_codecs(self):
+        self.file("not-really-an-image.png", b"arbitrary data")
+        tool = next(t for t in core.catalog() if t["name"] == "library-summary")
+        args = core.parser(tool).parse_args([str(self.inputs)])
+        with (
+            mock.patch.object(Path, "open", side_effect=AssertionError("content read")),
+            mock.patch.object(core, "run", side_effect=AssertionError("codec invoked")),
+        ):
+            good, bad = core.execute(tool, args)
+        self.assertEqual(good[0]["total_bytes"], 14)
+        self.assertEqual(bad, [])
+
+    def test_summary_empty_and_write_guards(self):
+        self.cli("library-summary", self.inputs, code=1)
+        source = self.file("empty", b"")
+        response = json.loads(self.cli("library-summary", source).stdout)
+        self.assertEqual(response["results"][0]["empty_files"], 1)
+        self.assertEqual(response["results"][0]["max_bytes"], 0)
+        self.cli("library-summary", "--apply", source, code=2)
+        self.cli("library-summary", "--output", self.work / "output", source, code=2)
+
     def test_duplicates(self):
         self.file("one")
         self.file("two")
@@ -317,6 +368,17 @@ class Common(Fixture):
                 },
             },
         ]
+        requests.append(
+            {
+                "jsonrpc": "2.0",
+                "id": 6,
+                "method": "tools/call",
+                "params": {
+                    "name": "library-summary",
+                    "arguments": {"paths": [str(self.inputs)]},
+                },
+            }
+        )
         result = subprocess.run(
             [
                 sys.executable,
@@ -332,13 +394,19 @@ class Common(Fixture):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         rows = [json.loads(row) for row in result.stdout.splitlines()]
-        self.assertEqual(len(rows), 5)
+        self.assertEqual(len(rows), 6)
         self.assertTrue(
             all(t["annotations"]["readOnlyHint"] for t in rows[1]["result"]["tools"])
         )
         self.assertFalse(rows[2]["result"]["isError"])
         self.assertTrue(rows[3]["result"]["isError"])
         self.assertTrue(rows[4]["result"]["isError"])
+        self.assertIn(
+            "library-summary", [t["name"] for t in rows[1]["result"]["tools"]]
+        )
+        self.assertFalse(rows[5]["result"]["isError"])
+        summary = json.loads(rows[5]["result"]["content"][0]["text"])
+        self.assertEqual(summary["results"][0]["file_count"], 1)
 
     def test_mcp_bad_json(self):
         result = subprocess.run(

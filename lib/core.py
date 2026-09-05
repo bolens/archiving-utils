@@ -283,6 +283,34 @@ def common(tool, files, args):
             {"path": str(p), "relative": str(rel), "bytes": p.stat().st_size}
             for p, rel in files
         ]
+    if op == "summary":
+        extensions = {}
+        total_bytes = empty_files = 0
+        smallest = largest = None
+        for path, _ in files:
+            size = path.stat().st_size
+            total_bytes += size
+            empty_files += int(size == 0)
+            smallest = size if smallest is None else min(smallest, size)
+            largest = size if largest is None else max(largest, size)
+            extension = path.suffix.lower()
+            if extension == ".":
+                extension = ""  # Keep trailing-dot names consistent on Python 3.11+.
+            group = extensions.setdefault(
+                extension, {"extension": extension, "file_count": 0, "total_bytes": 0}
+            )
+            group["file_count"] += 1
+            group["total_bytes"] += size
+        return [
+            {
+                "file_count": len(files),
+                "total_bytes": total_bytes,
+                "empty_files": empty_files,
+                "min_bytes": smallest,
+                "max_bytes": largest,
+                "extensions": [extensions[key] for key in sorted(extensions)],
+            }
+        ]
     if op == "duplicates":
         sizes = {p: p.stat().st_size for p, _ in files}
         counts = Counter(sizes.values())

@@ -47,3 +47,15 @@ Keep the manifest outside the scanned tree. Verification checks the full path se
 ## Duplicate detection
 
 `library-dupes` first groups files by byte size and hashes only files whose size occurs more than once. Same-size files still require matching full SHA-256 hashes. Results preserve discovery order and never delete or modify files.
+
+## Collection summary
+
+```bash
+bin/archiving-utils library-summary ./library
+```
+
+The response contains one summary in `results`: `file_count`, `total_bytes`, `empty_files`, `min_bytes`, `max_bytes`, and an `extensions` array with counts and byte totals. Sizes are logical file bytes, not allocated disk space. No file contents are read and no codecs run. This command does not verify media integrity.
+
+Extensions use the lowercase final suffix, so `.JPG` and `.jpg` share a group and `collection.tar.gz` is grouped under `.gz`. An empty extension represents names without a suffix, including `.hidden` and names ending in a dot. Extension groups sort by name. Overlapping input paths count each discovered path once. Distinct hard-link paths count separately. Symlinks are skipped during directory discovery. Empty input trees retain the usual no-matches failure.
+
+`library-summary` is also available through the read-only MCP server, with the same allowed-root restrictions as inventory.

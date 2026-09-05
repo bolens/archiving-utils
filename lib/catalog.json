@@ -7,6 +7,13 @@
     "mode": "read"
   },
   {
+    "name": "library-summary",
+    "operation": "summary",
+    "description": "Summarize file counts, byte sizes, empty files, and extensions without reading contents.",
+    "category": "library",
+    "mode": "read"
+  },
+  {
     "name": "library-dupes",
     "operation": "duplicates",
     "description": "Find exact SHA-256 duplicates without deleting files.",
