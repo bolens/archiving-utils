@@ -41,6 +41,8 @@ class Archive(Fixture):
         self.file("-dash.bin", b"more data")
         self.file("empty.bin", b"")
         (self.inputs / "empty-directory").mkdir()
+        self.file("nested/雪 [*]\n.bin", bytes(range(256)))
+        (self.inputs / "nested/empty/deeper").mkdir(parents=True)
 
     def test_exclude_corrupt_archive_from_extraction_batch(self):
         archive = self.inputs / "good.zip"
@@ -63,6 +65,14 @@ class Archive(Fixture):
 
     def test_all_pack_repack_and_reports(self):
         self.seed()
+
+        def snapshot(root):
+            return {
+                p.relative_to(root).as_posix(): None if p.is_dir() else p.read_bytes()
+                for p in root.rglob("*")
+            }
+
+        expected = snapshot(self.inputs)
         for fmt in ("zip", "tar", "tar-gz", "tar-bz2", "tar-xz"):
             with self.subTest(format=fmt):
                 suffix = fmt.replace("-", ".")
@@ -78,10 +88,14 @@ class Archive(Fixture):
                 self.assertEqual(
                     (extracted / "space [1]\n.bin").read_bytes(), b"data" * 200
                 )
-                self.assertTrue((extracted / "empty-directory").is_dir())
+                self.assertEqual(snapshot(extracted), expected)
                 repacked = self.work / ("repacked." + suffix)
                 self.cli("archive-to-" + fmt, "--apply", "--output", repacked, archive)
                 self.cli("archive-verify", repacked)
+                restored = self.work / ("restored-" + fmt)
+                self.cli("archive-extract", "--apply", "-o", restored, repacked)
+                self.assertEqual(snapshot(restored), expected)
+                self.assertEqual(snapshot(self.inputs), expected)
 
     def test_compression_roundtrips(self):
         for payload in (b"compress me" * 1000, b""):
