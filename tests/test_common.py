@@ -397,6 +397,15 @@ class Common(Fixture):
         self.assertFalse((self.inputs / "report.json").exists())
         self.assertFalse((self.home / "report.json").exists())
 
+    def test_normalized_path_still_rejects_symlinks(self):
+        source = self.file()
+        link = self.work / "link"
+        link.symlink_to(self.inputs, target_is_directory=True)
+        supplied = self.work / "missing" / ".." / "link" / source.name
+        result = self.cli("library-inventory", supplied, code=1)
+        self.assertIn("symlink input is not supported", result.stderr)
+        self.assertEqual(result.stdout, "")
+
     def test_parent_component_without_symlink_still_works(self):
         source = self.file()
         nested = self.inputs / "nested"
