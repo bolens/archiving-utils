@@ -2,7 +2,7 @@
 
 `make test` runs shared CLI, publication, filename, configuration, and MCP tests.
 `make test-functional` runs real domain operations on generated fixtures.
-`make test-all` runs both tiers and repository-validation tests. All tests use disposable directories and isolated HOME/XDG/TMPDIR values.
+`make test-all` runs both tiers and repository-validation tests. Tests use disposable fixtures. CLI subprocesses receive isolated HOME/XDG/TMPDIR values.
 
 Archive tests exercise compression and packaging formats, malicious member paths, links, duplicates, limits, corruption, extraction, and batch collisions.
 
