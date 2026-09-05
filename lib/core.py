@@ -50,11 +50,11 @@ def digest(path):
 
 
 def regular(path):
-    # Reject every symlink component before canonicalizing.
-    path = Path(os.path.abspath(path))
+    # Preserve .. until every original component has been checked for symlinks.
+    path = Path(path).absolute()
     if any(p.is_symlink() for p in (path, *path.parents)):
         raise ValueError("symlink input is not supported: " + str(path))
-    return path
+    return Path(os.path.abspath(path))
 
 
 def excluded(relative, patterns):

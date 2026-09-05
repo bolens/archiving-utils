@@ -335,6 +335,32 @@ class Common(Fixture):
         rows = json.loads(self.cli("library-inventory", self.inputs).stdout)["results"]
         self.assertEqual(len(rows), 1)
 
+    def test_symlink_before_parent_component_is_rejected(self):
+        source = self.file()
+        target = self.home / "nested"
+        target.mkdir()
+        link = self.inputs / "link"
+        link.symlink_to(target, target_is_directory=True)
+        supplied = link / ".." / source.name
+        relative = Path(os.path.relpath(link)) / ".." / source.name
+        for path in (supplied, relative):
+            with self.subTest(path=str(path)):
+                result = self.cli("library-inventory", path, code=1)
+                self.assertIn("symlink input is not supported", result.stderr)
+        report = link / ".." / "report.json"
+        result = self.cli("library-inventory", "-S", report, source, code=1)
+        self.assertIn("symlink input is not supported", result.stderr)
+        self.assertFalse((self.inputs / "report.json").exists())
+        self.assertFalse((self.home / "report.json").exists())
+
+    def test_parent_component_without_symlink_still_works(self):
+        source = self.file()
+        nested = self.inputs / "nested"
+        nested.mkdir()
+        supplied = nested / ".." / source.name
+        result = json.loads(self.cli("library-inventory", supplied).stdout)
+        self.assertEqual(result["results"][0]["path"], str(source))
+
     def test_missing_and_empty(self):
         self.cli("library-inventory", self.work / "missing", code=1)
         self.cli("library-inventory", self.inputs, code=1)
