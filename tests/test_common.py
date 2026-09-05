@@ -219,6 +219,50 @@ class Common(Fixture):
         self.file("nested/unicodé\nfile", b"modified")
         self.cli("hash-verify", "--manifest", manifest, self.inputs, code=1)
 
+    def test_manifest_rejects_symlink_paths(self):
+        self.file()
+        manifest = self.home / "manifest.json"
+        manifest.write_text(self.cli("hash-manifest", self.inputs).stdout)
+        link = self.work / "manifest-link.json"
+        link.symlink_to(manifest)
+        directory = self.work / "directory-link"
+        directory.symlink_to(self.home, target_is_directory=True)
+        for path in (link, directory / manifest.name):
+            with self.subTest(path=str(path)):
+                result = self.cli("hash-verify", "--manifest", path, self.inputs, code=1)
+                self.assertIn("symlink input is not supported", result.stderr)
+                self.assertEqual(result.stdout, "")
+
+    def test_config_rejects_symlink_paths(self):
+        self.file()
+        config = self.home / "settings.json"
+        config.write_text(json.dumps({"roots": [str(self.inputs)]}))
+        link = self.work / "config-link.json"
+        link.symlink_to(config)
+        directory = self.work / "directory-link"
+        directory.symlink_to(self.home, target_is_directory=True)
+        for path in (link, directory / config.name):
+            with self.subTest(path=str(path)):
+                result = self.cli("library-inventory", "--config", path, code=2)
+                self.assertIn("invalid config", result.stderr)
+                self.assertIn("symlink input is not supported", result.stderr)
+                self.assertEqual(result.stdout, "")
+
+    def test_default_config_rejects_symlinks(self):
+        self.file()
+        config = Path(self.env["XDG_CONFIG_HOME"]) / core.SUITE / "config.json"
+        config.parent.mkdir(parents=True)
+        target = self.home / "settings.json"
+        target.write_text("{}")
+        config.symlink_to(target)
+        for dangling in (False, True):
+            with self.subTest(dangling=dangling):
+                if dangling:
+                    target.unlink()
+                result = self.cli("library-inventory", self.inputs, code=2)
+                self.assertIn("symlink input is not supported", result.stderr)
+                self.assertEqual(result.stdout, "")
+
     def test_manifest_rejects_ambiguous_generation(self):
         self.file()
         other = self.work / "other"
@@ -334,6 +378,41 @@ class Common(Fixture):
         nested.symlink_to(self.home, target_is_directory=True)
         rows = json.loads(self.cli("library-inventory", self.inputs).stdout)["results"]
         self.assertEqual(len(rows), 1)
+
+    def test_symlink_before_parent_component_is_rejected(self):
+        source = self.file()
+        target = self.home / "nested"
+        target.mkdir()
+        link = self.inputs / "link"
+        link.symlink_to(target, target_is_directory=True)
+        supplied = link / ".." / source.name
+        relative = Path(os.path.relpath(link)) / ".." / source.name
+        for path in (supplied, relative):
+            with self.subTest(path=str(path)):
+                result = self.cli("library-inventory", path, code=1)
+                self.assertIn("symlink input is not supported", result.stderr)
+        report = link / ".." / "report.json"
+        result = self.cli("library-inventory", "-S", report, source, code=1)
+        self.assertIn("symlink input is not supported", result.stderr)
+        self.assertFalse((self.inputs / "report.json").exists())
+        self.assertFalse((self.home / "report.json").exists())
+
+    def test_normalized_path_still_rejects_symlinks(self):
+        source = self.file()
+        link = self.work / "link"
+        link.symlink_to(self.inputs, target_is_directory=True)
+        supplied = self.work / "missing" / ".." / "link" / source.name
+        result = self.cli("library-inventory", supplied, code=1)
+        self.assertIn("symlink input is not supported", result.stderr)
+        self.assertEqual(result.stdout, "")
+
+    def test_parent_component_without_symlink_still_works(self):
+        source = self.file()
+        nested = self.inputs / "nested"
+        nested.mkdir()
+        supplied = nested / ".." / source.name
+        result = json.loads(self.cli("library-inventory", supplied).stdout)
+        self.assertEqual(result["results"][0]["path"], str(source))
 
     def test_missing_and_empty(self):
         self.cli("library-inventory", self.work / "missing", code=1)

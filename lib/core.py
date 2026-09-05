@@ -50,11 +50,13 @@ def digest(path):
 
 
 def regular(path):
-    # Reject every symlink component before canonicalizing.
-    path = Path(os.path.abspath(path))
-    if any(p.is_symlink() for p in (path, *path.parents)):
-        raise ValueError("symlink input is not supported: " + str(path))
-    return path
+    # Preserve .. until every original component has been checked for symlinks.
+    path = Path(path).absolute()
+    normalized = Path(os.path.abspath(path))
+    for candidate in (path, normalized):
+        if any(p.is_symlink() for p in (candidate, *candidate.parents)):
+            raise ValueError("symlink input is not supported: " + str(path))
+    return normalized
 
 
 def excluded(relative, patterns):
@@ -197,9 +199,9 @@ def load_args(tool, argv):
         / "config.json"
     )
     config = {}
-    if args.config or config_path.exists():
+    if args.config or config_path.exists() or config_path.is_symlink():
         try:
-            config = json.loads(config_path.read_text())
+            config = json.loads(regular(config_path).read_text())
             if not isinstance(config, dict) or set(config) - {"roots", "jobs"}:
                 raise ValueError("only roots and jobs are supported")
             if not isinstance(config.get("roots", []), list) or not all(
@@ -243,7 +245,7 @@ def load_args(tool, argv):
 
 def manifest_entries(path):
     """Accept a saved CLI response or the original bare manifest array."""
-    data = json.loads(path.read_text())
+    data = json.loads(regular(path).read_text())
     if isinstance(data, dict):
         if data.get("tool") != "hash-manifest" or data.get("failures") != []:
             raise ValueError("manifest must be a successful hash-manifest response")
