@@ -29,8 +29,15 @@ class Fixture(unittest.TestCase):
             HOME=str(self.home),
             XDG_CONFIG_HOME=str(self.home / "config"),
             XDG_STATE_HOME=str(self.home / "state"),
+            XDG_CACHE_HOME=str(self.home / "cache"),
+            XDG_DATA_HOME=str(self.home / "data"),
+            XDG_RUNTIME_DIR=str(self.home / "runtime"),
             TMPDIR=str(self.work),
         )
+
+        for key in ("XDG_CONFIG_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME",
+                    "XDG_DATA_HOME", "XDG_RUNTIME_DIR"):
+            Path(self.env[key]).mkdir(mode=0o700)
 
     def cli(self, *args, code=0):
         result = subprocess.run(
@@ -51,6 +58,31 @@ class Fixture(unittest.TestCase):
 
 
 class Common(Fixture):
+    def test_fixture_replaces_inherited_xdg_paths(self):
+        caller = self.work / "caller-state"
+        caller.mkdir()
+        keys = ("HOME", "XDG_CONFIG_HOME", "XDG_STATE_HOME", "XDG_CACHE_HOME",
+                "XDG_DATA_HOME", "XDG_RUNTIME_DIR", "TMPDIR")
+        with mock.patch.dict(os.environ, {key: str(caller) for key in keys}):
+            fixture = Fixture()
+            fixture.setUp()
+            self.addCleanup(fixture.doCleanups)
+        for key in keys:
+            with self.subTest(key=key):
+                path = Path(fixture.env[key])
+                self.assertTrue(path.is_relative_to(fixture.work))
+                self.assertTrue(path.is_dir())
+        self.assertEqual(Path(fixture.env["XDG_RUNTIME_DIR"]).stat().st_mode & 0o777, 0o700)
+        result = subprocess.run(
+            [sys.executable, "-c",
+             "import os, pathlib; "
+             "[pathlib.Path(os.environ[k], 'probe').write_text(k) for k in "
+             + repr(keys) + "]"],
+            env=fixture.env, capture_output=True, timeout=10,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(list(caller.iterdir()), [])
+
     def test_help_every_tool(self):
         for tool in core.catalog():
             with self.subTest(tool=tool["name"]):
