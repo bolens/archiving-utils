@@ -1,3 +1,3 @@
-ROOT := $(abspath ../../..)
+ROOT := ../../..
 TOOL := archive-list
 include $(ROOT)/lib/tool.mk

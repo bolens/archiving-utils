@@ -15,7 +15,8 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-SUITE = ROOT.name
+# CLI identity and default configuration namespace must survive checkout renames.
+SUITE = "archiving-utils"
 
 
 class UsageError(Exception):

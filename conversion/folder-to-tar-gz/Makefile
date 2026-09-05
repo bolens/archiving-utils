@@ -1,3 +1,3 @@
-ROOT := $(abspath ../..)
+ROOT := ../..
 TOOL := folder-to-tar-gz
 include $(ROOT)/lib/tool.mk

@@ -11,6 +11,8 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "lib"))
+import core
 
 
 def managed_spec_kit_files():
@@ -50,7 +52,7 @@ def main():
     for path in ROOT.rglob("*.py"):
         ast.parse(path.read_text(), filename=str(path))
     scripts = sorted(path for path in ROOT.rglob("*.sh") if path not in managed) + [
-        ROOT / "bin" / ROOT.name,
+        ROOT / "bin" / core.SUITE,
         ROOT / ".githooks/pre-commit",
     ]
     if not shutil.which("shellcheck"):

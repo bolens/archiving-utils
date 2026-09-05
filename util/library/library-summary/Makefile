@@ -1,3 +1,3 @@
-ROOT := $(abspath ../../..)
+ROOT := ../../..
 TOOL := library-summary
 include $(ROOT)/lib/tool.mk

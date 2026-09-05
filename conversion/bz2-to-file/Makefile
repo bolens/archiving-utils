@@ -1,3 +1,3 @@
-ROOT := $(abspath ../..)
+ROOT := ../..
 TOOL := bz2-to-file
 include $(ROOT)/lib/tool.mk
