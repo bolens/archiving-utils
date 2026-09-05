@@ -54,6 +54,17 @@ jobs:
           docker push "$IMAGE:sha-$GITHUB_SHA"
           docker tag "$IMAGE:sha-$GITHUB_SHA" "$IMAGE:latest"
           docker push "$IMAGE:latest"
+      - name: Pull and smoke-test the published digest
+        run: |
+          image_ref=$(docker image inspect "$IMAGE:sha-$GITHUB_SHA" --format '{{index .RepoDigests 0}}')
+          case "$image_ref" in
+            "$IMAGE"@sha256:*) ;;
+            *) echo "Missing published image digest" >&2; exit 1 ;;
+          esac
+          docker pull "$image_ref"
+          docker run --rm --network=none --read-only --tmpfs /tmp \
+            --cap-drop=ALL --security-opt=no-new-privileges "$image_ref" --help
+          printf 'Published and verified %s\n' "$image_ref" >> "$GITHUB_STEP_SUMMARY"
       - name: Remove registry credentials
         if: always()
         run: docker logout ghcr.io
