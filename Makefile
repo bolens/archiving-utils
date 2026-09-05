@@ -4,7 +4,7 @@ TOOLS := $(patsubst %/Makefile,%,$(wildcard conversion/*/Makefile util/*/*/Makef
 .PHONY: help generate check check-lib check-mcp check-docs check-tests test test-functional test-all install-hooks
 help:
 	@echo "make check | test | test-functional | test-all | generate | install-hooks"
-	@echo "Run a tool: bin/$(notdir $(CURDIR)) TOOL --help"
+	@$(PYTHON) -c 'import sys; sys.path.insert(0, "lib"); import core; print("Run a tool: bin/" + core.SUITE + " TOOL --help")'
 generate:
 	$(PYTHON) scripts/generate.py
 check:

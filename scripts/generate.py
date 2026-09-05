@@ -58,7 +58,7 @@ def cli_reference(tool):
 
 
 def generate():
-    suite = ROOT.name
+    suite = core.SUITE
     d = DETAILS[suite]
     files = {}
     tools = core.catalog()
@@ -74,7 +74,7 @@ def generate():
             f'#!/usr/bin/env bash\nset -euo pipefail\nroot=$(cd -- "$(dirname -- "${{BASH_SOURCE[0]}}")/{up}" && pwd)\nexec "$root/bin/{suite}" {name} "$@"\n'
         )
         files[folder / "Makefile"] = (
-            f"ROOT := $(abspath {up})\nTOOL := {name}\ninclude $(ROOT)/lib/tool.mk\n"
+            f"ROOT := {up}\nTOOL := {name}\ninclude $(ROOT)/lib/tool.mk\n"
         )
         files[folder / "README.md"] = (
             f"# {name}\n\n{tool['description']}\n\nMode: **{tool['mode']}**. Operation: `{tool['operation']}`.\n\n"

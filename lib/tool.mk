@@ -1,13 +1,14 @@
+PYTHON ?= python3
 .PHONY: help convert convert-quiet dry-run check test
 help:
-	@$(ROOT)/bin/$(notdir $(ROOT)) $(TOOL) --help
+	@$(PYTHON) "$(ROOT)/lib/core.py" "$(TOOL)" --help
 convert:
-	@$(ROOT)/bin/$(notdir $(ROOT)) $(TOOL) $(ARGS)
+	@$(PYTHON) "$(ROOT)/lib/core.py" "$(TOOL)" $(ARGS)
 convert-quiet:
-	@$(ROOT)/bin/$(notdir $(ROOT)) $(TOOL) --quiet $(ARGS)
+	@$(PYTHON) "$(ROOT)/lib/core.py" "$(TOOL)" --quiet $(ARGS)
 dry-run:
-	@$(ROOT)/bin/$(notdir $(ROOT)) $(TOOL) --dry-run $(ARGS)
+	@$(PYTHON) "$(ROOT)/lib/core.py" "$(TOOL)" --dry-run $(ARGS)
 check:
-	@$(MAKE) -C $(ROOT) check
+	@$(MAKE) -C "$(ROOT)" check
 test:
-	@$(MAKE) -C $(ROOT) test-all
+	@$(MAKE) -C "$(ROOT)" test-all

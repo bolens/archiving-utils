@@ -9,3 +9,10 @@ Development checks need Python, Make, and ShellCheck. Archive operations do not 
 Archive parsers process local files. Keep Python and its compression libraries maintained. Extraction rejects unsafe member paths and links and enforces the byte and member limits described in [Formats and limits](formats.md).
 
 No automatic downloads, network enrichment, telemetry, package installation, or source deletion happens when running commands.
+
+## Development checkouts
+
+The checkout folder may be renamed or contain spaces and Unicode. CLI identity
+and the default configuration directory remain `archiving-utils`. Git is required
+for the disposable-checkout regression tests; normal media commands do not
+require Git. Tests copy only tracked source and isolate HOME/XDG/TMPDIR state.

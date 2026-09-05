@@ -1,3 +1,3 @@
-ROOT := $(abspath ../../..)
+ROOT := ../../..
 TOOL := path-audit
 include $(ROOT)/lib/tool.mk

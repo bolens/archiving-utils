@@ -1,8 +1,8 @@
 # archiving-utils delivery playbook
 
 This repository delivers reviewed source and its generated site from `main`.
-There is no versioned artifact release workflow. Do not invent release tags or
-package publication for documentation or CI maintenance.
+`VERSION` is the CLI version authority. There is no versioned artifact release
+workflow. Do not invent release tags or package publication for documentation or CI maintenance.
 
 ## Prepare and validate
 
@@ -29,8 +29,7 @@ use a personal media library as a publication smoke test.
 ## Recover and future releases
 
 Repair or revert through a new reviewed PR. Preserve source media and existing
-outputs during recovery. A future versioned release needs an explicit version
-authority, artifact contract, immutable source SHA, verification, and rollback
-procedure before its first tag. No product release is needed for this setup.
+outputs during recovery. Before the first versioned release, define the artifact contract, verification,
+and rollback procedure, and tie `VERSION` and the tag to an immutable source SHA.
 
 Fleet policy: <https://github.com/bolens/.github/blob/main/RELEASING.md>.
