@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "archiving-utils architecture",
+    "quality_profile": "showcase",
+    "viewBox": [
+      1040,
+      500
+    ]
+  },
+  "components": [
+    {
+      "id": "entry",
+      "type": "frontend",
+      "label": "Command entry",
+      "sublabel": "Bash / Make / MCP",
+      "pos": [
+        40,
+        80
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "driver",
+      "type": "backend",
+      "label": "Batch driver",
+      "sublabel": "Config / discovery / jobs",
+      "pos": [
+        400,
+        80
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "engine",
+      "type": "backend",
+      "label": "ZIP / TAR / compression",
+      "sublabel": "Domain operations",
+      "pos": [
+        760,
+        80
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "checks",
+      "type": "security",
+      "label": "Output verification",
+      "sublabel": "Decode / checksum checks",
+      "pos": [
+        760,
+        350
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "publish",
+      "type": "database",
+      "label": "Atomic publication",
+      "sublabel": "New paths only",
+      "pos": [
+        400,
+        350
+      ],
+      "size": [
+        240,
+        80
+      ]
+    },
+    {
+      "id": "reports",
+      "type": "database",
+      "label": "JSON reports",
+      "sublabel": "Inventory / audit results",
+      "pos": [
+        40,
+        350
+      ],
+      "size": [
+        240,
+        80
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "from": "entry",
+      "to": "driver",
+      "label": "dispatch"
+    },
+    {
+      "from": "driver",
+      "to": "engine",
+      "label": "execute"
+    },
+    {
+      "from": "engine",
+      "to": "checks",
+      "label": "validate",
+      "labelDy": 100
+    },
+    {
+      "from": "checks",
+      "to": "publish",
+      "label": "commit"
+    },
+    {
+      "from": "publish",
+      "to": "reports",
+      "label": "report"
+    },
+    {
+      "from": "driver",
+      "to": "reports",
+      "label": "read-only results",
+      "route": "orthogonal-v"
+    }
+  ]
+}

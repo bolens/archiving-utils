@@ -1,0 +1,42 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '23 12 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.14']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@751276eafca55f10f252026015f43c488f2322ba
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install test tools
+        run: sudo apt-get update && sudo apt-get install -y shellcheck make ffmpeg
+      - name: Check code and generated documentation
+        run: make check
+      - name: Run disposable-fixture tests
+        run: |
+          set -o pipefail
+          make test-all 2>&1 | tee test-results.txt
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: test-results-${{ matrix.python }}
+          path: test-results.txt
+          if-no-files-found: warn

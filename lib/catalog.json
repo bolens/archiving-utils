@@ -1,0 +1,366 @@
+[
+  {
+    "name": "library-inventory",
+    "operation": "inventory",
+    "description": "List file sizes and relative paths.",
+    "category": "library",
+    "mode": "read"
+  },
+  {
+    "name": "library-dupes",
+    "operation": "duplicates",
+    "description": "Find exact SHA-256 duplicates without deleting files.",
+    "category": "library",
+    "mode": "read"
+  },
+  {
+    "name": "hash-manifest",
+    "operation": "manifest",
+    "description": "Print a JSON SHA-256 manifest for the input tree.",
+    "category": "library",
+    "mode": "read"
+  },
+  {
+    "name": "hash-verify",
+    "operation": "hash-verify",
+    "description": "Verify file presence and hashes against a JSON manifest.",
+    "category": "library",
+    "mode": "read"
+  },
+  {
+    "name": "tree-diff",
+    "operation": "tree-diff",
+    "description": "Compare file hashes and presence against another tree.",
+    "category": "library",
+    "mode": "read"
+  },
+  {
+    "name": "path-audit",
+    "operation": "path-audit",
+    "description": "Report filename portability issues.",
+    "category": "library",
+    "mode": "read"
+  },
+  {
+    "name": "folder-to-zip",
+    "operation": "pack",
+    "description": "Package a directory as zip and verify member hashes.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "zip",
+    "suffix": "zip"
+  },
+  {
+    "name": "archive-to-zip",
+    "operation": "repack",
+    "description": "Repack a verified archive as zip.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "zip",
+    "suffix": "zip",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "folder-to-tar",
+    "operation": "pack",
+    "description": "Package a directory as tar and verify member hashes.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar",
+    "suffix": "tar"
+  },
+  {
+    "name": "archive-to-tar",
+    "operation": "repack",
+    "description": "Repack a verified archive as tar.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar",
+    "suffix": "tar",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "folder-to-tar-gz",
+    "operation": "pack",
+    "description": "Package a directory as tar.gz and verify member hashes.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar.gz",
+    "suffix": "tar.gz"
+  },
+  {
+    "name": "archive-to-tar-gz",
+    "operation": "repack",
+    "description": "Repack a verified archive as tar.gz.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar.gz",
+    "suffix": "tar.gz",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "folder-to-tar-bz2",
+    "operation": "pack",
+    "description": "Package a directory as tar.bz2 and verify member hashes.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar.bz2",
+    "suffix": "tar.bz2"
+  },
+  {
+    "name": "archive-to-tar-bz2",
+    "operation": "repack",
+    "description": "Repack a verified archive as tar.bz2.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar.bz2",
+    "suffix": "tar.bz2",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "folder-to-tar-xz",
+    "operation": "pack",
+    "description": "Package a directory as tar.xz and verify member hashes.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar.xz",
+    "suffix": "tar.xz"
+  },
+  {
+    "name": "archive-to-tar-xz",
+    "operation": "repack",
+    "description": "Repack a verified archive as tar.xz.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "tar.xz",
+    "suffix": "tar.xz",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "file-to-gz",
+    "operation": "compress",
+    "description": "Compress individual files with gz and check the round trip.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "gz",
+    "suffix": "gz"
+  },
+  {
+    "name": "gz-to-file",
+    "operation": "decompress",
+    "description": "Decompress gz with a bounded output size.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "gz",
+    "suffix": "decoded",
+    "extensions": [
+      ".gz"
+    ]
+  },
+  {
+    "name": "gz-verify",
+    "operation": "compression-test",
+    "description": "Read and verify the complete gz stream.",
+    "category": "audit",
+    "mode": "read",
+    "format": "gz",
+    "extensions": [
+      ".gz"
+    ]
+  },
+  {
+    "name": "file-to-bz2",
+    "operation": "compress",
+    "description": "Compress individual files with bz2 and check the round trip.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "bz2",
+    "suffix": "bz2"
+  },
+  {
+    "name": "bz2-to-file",
+    "operation": "decompress",
+    "description": "Decompress bz2 with a bounded output size.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "bz2",
+    "suffix": "decoded",
+    "extensions": [
+      ".bz2"
+    ]
+  },
+  {
+    "name": "bz2-verify",
+    "operation": "compression-test",
+    "description": "Read and verify the complete bz2 stream.",
+    "category": "audit",
+    "mode": "read",
+    "format": "bz2",
+    "extensions": [
+      ".bz2"
+    ]
+  },
+  {
+    "name": "file-to-xz",
+    "operation": "compress",
+    "description": "Compress individual files with xz and check the round trip.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "xz",
+    "suffix": "xz"
+  },
+  {
+    "name": "xz-to-file",
+    "operation": "decompress",
+    "description": "Decompress xz with a bounded output size.",
+    "category": "conversion",
+    "mode": "write",
+    "format": "xz",
+    "suffix": "decoded",
+    "extensions": [
+      ".xz"
+    ]
+  },
+  {
+    "name": "xz-verify",
+    "operation": "compression-test",
+    "description": "Read and verify the complete xz stream.",
+    "category": "audit",
+    "mode": "read",
+    "format": "xz",
+    "extensions": [
+      ".xz"
+    ]
+  },
+  {
+    "name": "archive-extract",
+    "operation": "extract",
+    "description": "Extract regular files into a new directory after path and size checks.",
+    "category": "archive",
+    "mode": "write",
+    "suffix": "extracted",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "archive-list",
+    "operation": "list",
+    "description": "List members with sizes and SHA-256 hashes.",
+    "category": "audit",
+    "mode": "read",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "archive-verify",
+    "operation": "verify",
+    "description": "Check archive structure, member safety, and complete payloads.",
+    "category": "audit",
+    "mode": "read",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "archive-stats",
+    "operation": "stats",
+    "description": "Report member counts, stored size, and expansion ratio.",
+    "category": "audit",
+    "mode": "read",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  },
+  {
+    "name": "archive-manifest",
+    "operation": "archive-manifest",
+    "description": "Print member SHA-256 hashes without extraction.",
+    "category": "audit",
+    "mode": "read",
+    "extensions": [
+      ".zip",
+      ".tar",
+      ".tar.gz",
+      ".tgz",
+      ".tar.bz2",
+      ".tbz2",
+      ".tar.xz",
+      ".txz"
+    ]
+  }
+]
