@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - name: Install test tools
-        run: sudo apt-get update && sudo apt-get install -y shellcheck make ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y shellcheck make
       - name: Check code and generated documentation
         run: make check
       - name: Run disposable-fixture tests
