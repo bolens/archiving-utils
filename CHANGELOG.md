@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Reject symlinks hidden by parent-path normalization before reading inputs or publishing outputs.
+- Reject symlinked configuration and manifest paths. Use regular files for these inputs; dangling default-config links now report an error.
+
 - Add repeatable `--exclude` globs for batch source selection, tree comparisons, and manifest verification. Folder packing rejects exclusions.
 
 - Add `library-summary` to the CLI and read-only MCP server for file counts, total bytes, empty files, size ranges, and extension totals without reading media contents.
