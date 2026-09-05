@@ -130,6 +130,67 @@ class Common(Fixture):
         self.cli("library-summary", "--apply", source, code=2)
         self.cli("library-summary", "--output", self.work / "output", source, code=2)
 
+    def test_exclude_relative_paths_and_repeated_patterns(self):
+        self.file("keep.bin")
+        self.file("cache/nested/skip.bin")
+        self.file("line\nbreak.tmp")
+        self.file("UPPER.TMP")
+        result = json.loads(
+            self.cli(
+                "library-inventory",
+                "--exclude",
+                "cache/*",
+                "--exclude=*.tmp",
+                self.inputs,
+            ).stdout
+        )
+        self.assertEqual(
+            {r["relative"] for r in result["results"]}, {"keep.bin", "UPPER.TMP"}
+        )
+        self.cli("library-inventory", "--exclude", "*", self.inputs, code=1)
+        self.cli("library-inventory", "--exclude=", self.inputs, code=2)
+
+    def test_exclude_manifest_and_comparison_both_sides(self):
+        self.file("keep.bin")
+        ignored = self.file("ignored.tmp")
+        manifest = self.work / "manifest.json"
+        manifest.write_text(self.cli("hash-manifest", self.inputs).stdout)
+        ignored.write_bytes(b"changed")
+        self.cli(
+            "hash-verify", "--manifest", manifest, "--exclude", "*.tmp", self.inputs
+        )
+        other = self.work / "other"
+        other.mkdir()
+        (other / "keep.bin").write_bytes(b"fixture data")
+        (other / "right-only.tmp").write_bytes(b"different")
+        result = json.loads(
+            self.cli(
+                "tree-diff", "--against", other, "--exclude", "*.tmp", self.inputs
+            ).stdout
+        )
+        self.assertEqual(result["results"], [])
+
+    def test_exclude_write_plan_and_pack_refusal(self):
+        tool = next(
+            t
+            for t in core.catalog()
+            if t["mode"] == "write" and t["operation"] != "pack"
+        )
+        suffix = tool.get("extensions", [".bin"])[0]
+        self.file("keep" + suffix)
+        self.file("skip" + suffix)
+        output = self.work / "outputs"
+        response = json.loads(
+            self.cli(
+                tool["name"], "--exclude", "skip*", "--output-dir", output, self.inputs
+            ).stdout
+        )
+        self.assertEqual(len(response["results"]), 1)
+        self.assertEqual(response["results"][0]["status"], "planned")
+        self.assertFalse(output.exists())
+        for pack in (t for t in core.catalog() if t["operation"] == "pack"):
+            self.cli(pack["name"], "--exclude", "*", "-o", output, self.inputs, code=2)
+
     def test_duplicates(self):
         self.file("one")
         self.file("two")

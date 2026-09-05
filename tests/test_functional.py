@@ -12,6 +12,25 @@ class Archive(Fixture):
         self.file("empty.bin", b"")
         (self.inputs / "empty-directory").mkdir()
 
+    def test_exclude_corrupt_archive_from_extraction_batch(self):
+        archive = self.inputs / "good.zip"
+        with zipfile.ZipFile(archive, "w") as packed:
+            packed.writestr("kept.bin", b"preserved")
+        ignored = self.file("skip-corrupt.zip", b"invalid archive")
+        output = self.work / "selected-output"
+        self.cli(
+            "archive-extract",
+            "--exclude",
+            "skip*",
+            "--apply",
+            "--output-dir",
+            output,
+            self.inputs,
+        )
+        self.assertEqual(list(output.rglob("kept.bin"))[0].read_bytes(), b"preserved")
+        self.assertEqual(ignored.read_bytes(), b"invalid archive")
+        self.assertTrue(archive.is_file())
+
     def test_all_pack_repack_and_reports(self):
         self.seed()
         for fmt in ("zip", "tar", "tar-gz", "tar-bz2", "tar-xz"):

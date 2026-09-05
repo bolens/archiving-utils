@@ -59,3 +59,15 @@ The response contains one summary in `results`: `file_count`, `total_bytes`, `em
 Extensions use the lowercase final suffix, so `.JPG` and `.jpg` share a group and `collection.tar.gz` is grouped under `.gz`. An empty extension represents names without a suffix, including `.hidden` and names ending in a dot. Extension groups sort by name. Overlapping input paths count each discovered path once. Distinct hard-link paths count separately. Symlinks are skipped during directory discovery. Empty input trees retain the usual no-matches failure.
 
 `library-summary` is also available through the read-only MCP server, with the same allowed-root restrictions as inventory.
+
+## Source exclusions
+
+```bash
+bin/archiving-utils library-summary --exclude 'previews/*' --exclude '*.tmp' ./library
+```
+
+Repeat `--exclude GLOB` to omit any matching file. Quote globs to prevent shell expansion. Matching is case-sensitive against each file's relative path using `/` separators. Explicit file inputs match their basename. `*` matches across separators, `?` matches one character, and bracket patterns match character sets. Hidden files follow the same rules. No shell evaluation occurs.
+
+Exclusions filter discovered files before hashing, planning outputs, or invoking codecs. Discovery still traverses directories and reports traversal errors. Tree comparisons apply exclusions to both roots. Manifest verification validates the complete manifest schema, then excludes matching expected entries as well as actual files. If no input files remain, the normal no-matches failure applies. Exclusions do not modify sources.
+
+Folder-packing commands reject exclusions rather than silently ignoring them. For archive conversion and extraction, exclusions select source archive files, not members inside an archive. MCP continues to accept only its existing allowed-root paths argument.

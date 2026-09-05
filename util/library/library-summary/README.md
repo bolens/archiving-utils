@@ -20,6 +20,7 @@ Prints JSON to stdout. Does not modify inputs.
 |---|---|
 | `-h / --help` | show this help message and exit |
 | `paths` | files or recursively scanned directories; use -- before leading dashes |
+| `--exclude EXCLUDE` | exclude relative file paths matching a case-sensitive glob; repeatable |
 | `--config CONFIG` | JSON config, defaults to XDG_CONFIG_HOME/archiving-utils/config.json |
 | `--apply` | execute output-producing operations |
 | `-n / --dry-run` | plan without writes |

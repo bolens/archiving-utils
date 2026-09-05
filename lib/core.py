@@ -4,6 +4,7 @@ import argparse
 import concurrent.futures
 from collections import Counter, deque
 import hashlib
+from fnmatch import fnmatchcase
 import json
 import os
 import re
@@ -56,7 +57,11 @@ def regular(path):
     return path
 
 
-def discover(roots, extensions=None):
+def excluded(relative, patterns):
+    return any(fnmatchcase(str(relative), pattern) for pattern in patterns)
+
+
+def discover(roots, extensions=None, excludes=()):
     found = {}
     for raw in roots:
         root = regular(raw)
@@ -81,6 +86,8 @@ def discover(roots, extensions=None):
         else:
             raise ValueError("input is not a regular file or directory: " + str(root))
         for p, rel in candidates:
+            if excluded(rel.as_posix(), excludes):
+                continue
             if extensions is None or any(
                 p.name.lower().endswith(e) for e in extensions
             ):
@@ -125,6 +132,13 @@ def parser(tool):
         "paths",
         nargs="*",
         help="files or recursively scanned directories; use -- before leading dashes",
+    )
+    p.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="GLOB",
+        help="exclude relative file paths matching a case-sensitive glob; repeatable",
     )
     p.add_argument(
         "--config",
@@ -172,6 +186,10 @@ def parser(tool):
 def load_args(tool, argv):
     p = parser(tool)
     args = p.parse_args(argv)
+    if any(not pattern for pattern in args.exclude):
+        p.error("--exclude patterns must not be empty")
+    if args.exclude and tool["operation"] == "pack":
+        p.error("--exclude is not supported for folder packing")
     config_path = (
         args.config
         or Path(os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config")))
@@ -327,7 +345,11 @@ def common(tool, files, args):
             for p, rel in files
         ]
     if op == "hash-verify":
-        expected = manifest_entries(args.manifest)
+        expected = {
+            name: checksum
+            for name, checksum in manifest_entries(args.manifest).items()
+            if not excluded(name, args.exclude)
+        }
         if len({str(rel) for _, rel in files}) != len(files):
             raise ValueError("ambiguous duplicate relative paths")
         actual = {str(rel): digest(p) for p, rel in files}
@@ -340,7 +362,10 @@ def common(tool, files, args):
         return result
     if op == "tree-diff":
         left = {str(rel): digest(p) for p, rel in files}
-        right = {str(rel): digest(p) for p, rel in discover([args.against])}
+        right = {
+            str(rel): digest(p)
+            for p, rel in discover([args.against], excludes=args.exclude)
+        }
         if len(left) != len(files):
             raise ValueError("ambiguous duplicate relative paths")
         return [
@@ -392,7 +417,7 @@ def execute(tool, args):
         if any(not p.is_dir() for p, _ in files):
             raise UsageError("pack requires directory inputs")
     else:
-        files = discover(args.paths, tool.get("extensions"))
+        files = discover(args.paths, tool.get("extensions"), args.exclude)
     if not files:
         raise ValueError("no matching input files")
     aggregate = common(tool, files, args)

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add repeatable `--exclude` globs for batch source selection, tree comparisons, and manifest verification. Folder packing rejects exclusions.
+
 - Add `library-summary` to the CLI and read-only MCP server for file counts, total bytes, empty files, size ranges, and extension totals without reading media contents.
 
 - Verify saved `hash-manifest` responses directly, while retaining support for bare entry arrays. Reject malformed manifests and ambiguous relative paths.
