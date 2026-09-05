@@ -1,0 +1,70 @@
+name: Docker
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '43 12 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  docker:
+    name: Docker runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@06be81baf89a55ffd0e24b8f04a4185738dd3387 # v3.5.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+      - name: Build and test the runtime image
+        run: make test-docker
+
+  publish:
+    name: Publish GHCR
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/bolens/archiving-utils
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Build and test the exact image to publish
+        run: make test-docker DOCKER_IMAGE="$IMAGE:sha-$GITHUB_SHA"
+      - name: Authenticate to GHCR
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
+      - name: Publish tested commit and latest tags
+        run: |
+          docker push "$IMAGE:sha-$GITHUB_SHA"
+          docker tag "$IMAGE:sha-$GITHUB_SHA" "$IMAGE:latest"
+          docker push "$IMAGE:latest"
+      - name: Pull and smoke-test the published digest
+        run: |
+          image_ref=$(docker image inspect "$IMAGE:sha-$GITHUB_SHA" --format '{{index .RepoDigests 0}}')
+          case "$image_ref" in
+            "$IMAGE"@sha256:*) ;;
+            *) echo "Missing published image digest" >&2; exit 1 ;;
+          esac
+          docker pull "$image_ref"
+          docker run --rm --network=none --read-only --tmpfs /tmp \
+            --cap-drop=ALL --security-opt=no-new-privileges "$image_ref" --help
+          printf 'Published and verified %s\n' "$image_ref" >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove registry credentials
+        if: always()
+        run: docker logout ghcr.io

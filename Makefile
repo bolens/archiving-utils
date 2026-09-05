@@ -25,3 +25,12 @@ $(notdir $(1))-%:
 	$$(MAKE) -C $(1) $$*
 endef
 $(foreach t,$(TOOLS),$(eval $(call TOOL_ALIAS,$(t))))
+
+# Runtime image and disposable bind-mount acceptance tests.
+CONTAINER_ENGINE ?= docker
+DOCKER_IMAGE ?= archiving-utils:local
+.PHONY: docker-build test-docker
+docker-build:
+	$(CONTAINER_ENGINE) build --pull -t $(DOCKER_IMAGE) .
+test-docker: docker-build
+	python3 scripts/test-docker.py --engine $(CONTAINER_ENGINE) --image $(DOCKER_IMAGE)
