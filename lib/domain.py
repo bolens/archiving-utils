@@ -11,7 +11,7 @@ import stat
 import tarfile
 import tempfile
 import zipfile
-from core import discover, digest, publish, regular
+from core import discover, digest, publish, regular, run
 
 COMPRESSORS = {"gz": gzip, "bz2": bz2, "xz": lzma}
 TAR_MODES = {"tar": "", "tar.gz": "gz", "tar.bz2": "bz2", "tar.xz": "xz"}
@@ -76,7 +76,15 @@ def scan(source, args, sink=None):
             (sink / path).mkdir(parents=True, exist_ok=True)
         result.append(row)
 
-    if zipfile.is_zipfile(source):
+    if source.suffix.lower() == ".cba":
+        raise ValueError("CBA/ACE comic archives are not supported; convert to CBZ with a trusted ACE tool")
+    with source.open("rb") as header:
+        magic = header.read(8)
+    if magic.startswith((b"Rar!\x1a\x07", b"7z\xbc\xaf\x27\x1c", b"\x28\xb5\x2f\xfd")):
+        import archive_backend
+
+        archive_backend.scan(source, consume, args.max_members)
+    elif zipfile.is_zipfile(source):
         with zipfile.ZipFile(source) as archive:
             for member in archive.infolist():
                 mode = member.external_attr >> 16
@@ -137,6 +145,9 @@ def pack(source, target, format_name, args):
                     archive.write(p, p.relative_to(source).as_posix() + "/")
                 for p, rel in files:
                     archive.write(p, rel.as_posix())
+        elif format_name in ("7z", "tar.zst"):
+            options = ["--format=7zip"] if format_name == "7z" else ["--format=pax", "--zstd"]
+            run(["bsdtar", "-c", *options, "-f", str(temp), "-C", str(source), "--", "."])
         else:
             with tarfile.open(
                 temp, "w:" + TAR_MODES[format_name], format=tarfile.PAX_FORMAT
@@ -149,12 +160,11 @@ def pack(source, target, format_name, args):
                     archive.add(p, arcname=rel.as_posix(), recursive=False)
 
     def verify(temp):
-        actual = {
-            row["name"]: row["sha256"]
-            for row in scan(temp, args)
-            if not row["directory"]
-        }
-        if expected != actual:
+        rows = scan(temp, args)
+        actual = {row["name"]: row["sha256"] for row in rows if not row["directory"]}
+        actual_dirs = {row["name"] for row in rows if row["directory"]}
+        expected_dirs = {p.relative_to(source).as_posix() for p in directories}
+        if expected != actual or expected_dirs != actual_dirs:
             raise ValueError("archive round-trip checksum mismatch")
 
     publish(target, writer, verify)
@@ -210,6 +220,10 @@ def inspect(tool, source, args):
     if op == "compression-test":
         return decompressed(source, COMPRESSORS[tool["format"]], args)
     rows = scan(source, args)
+    if op == "comic-info":
+        import comics
+
+        return comics.inventory(rows)
     if op == "list":
         return rows
     if op == "verify":

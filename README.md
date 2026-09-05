@@ -18,7 +18,7 @@ bin/archiving-utils folder-to-tar-xz --output collection.tar.xz ./collection
 # Review the plan, then add --apply to create outputs.
 ```
 
-31 commands cover conversion, inspection, and library maintenance. Tool directories are thin Bash entry points over a shared Python engine, following the layout and preservation intent of [audio-utils](https://github.com/bolens/audio-utils).
+48 commands cover conversion, inspection, and library maintenance. Tool directories are thin Bash entry points over a shared Python engine, following the layout and preservation intent of [audio-utils](https://github.com/bolens/audio-utils).
 
 ## Working contract
 

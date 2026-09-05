@@ -1,0 +1,15 @@
+{
+  "test_read_format_rar_windows": {
+    "testdir/test.txt": "2d45c5f87d1b6cef59a1d67a0ddeea9c75a7df81e5b64d30ecff39199b411bd9",
+    "test.txt": "2d45c5f87d1b6cef59a1d67a0ddeea9c75a7df81e5b64d30ecff39199b411bd9",
+    "testshortcut.lnk": "08b633f146f22534956b11bbc92e85f3f975e2820ecb892f958db5ae7bd7cf1f",
+    "testdir": null,
+    "testemptydir": null
+  },
+  "test_read_format_rar5_stored": {
+    "helloworld.txt": "fef9ad8cf601b43f76c6320075f62267c6e5c0a526d750a70b80c919a4a0aad8"
+  },
+  "test_read_format_rar5_compressed": {
+    "test.bin": "588870a2dade35c2650fbb7898c9a9c7f21fce7c281198604e8d0c9737f2c375"
+  }
+}

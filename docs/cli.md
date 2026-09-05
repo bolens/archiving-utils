@@ -71,3 +71,19 @@ Repeat `--exclude GLOB` to omit any matching file. Quote globs to prevent shell 
 Exclusions filter discovered files before hashing, planning outputs, or invoking codecs. Discovery still traverses directories and reports traversal errors. Tree comparisons apply exclusions to both roots. Manifest verification validates the complete manifest schema, then excludes matching expected entries as well as actual files. If no input files remain, the normal no-matches failure applies. Exclusions do not modify sources.
 
 Folder-packing commands reject exclusions rather than silently ignoring them. For archive conversion and extraction, exclusions select source archive files, not members inside an archive. MCP continues to accept only its existing allowed-root paths argument.
+
+## Comic creation, extraction and conversion
+
+```bash
+# Preview, then add --apply to create the requested output.
+bin/archiving-utils folder-to-cbz -o book.cbz ./pages
+bin/archiving-utils comic-info book.cbr
+bin/archiving-utils comic-extract --apply -o ./extracted book.cbr
+bin/archiving-utils comic-to-cbz --apply -o book.cbz book.cbr
+bin/archiving-utils comic-to-cb7 --apply -j 2 --output-dir ./converted ./comics
+```
+
+Folder packing includes every regular file and empty directory, including
+sidecars. Existing destinations and source symlinks are refused. See the
+[comic format matrix](formats.md#comic-archives) for writable formats and
+backend requirements. Comic commands never delete the originals.

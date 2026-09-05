@@ -13,7 +13,7 @@ check-lib check-mcp check-docs check-tests: check
 test:
 	$(PYTHON) -m unittest discover -s tests -p test_common.py -v
 test-functional:
-	$(PYTHON) -m unittest discover -s tests -p test_functional.py -v
+	$(PYTHON) -m unittest discover -s tests -p 'test_*functional.py' -v
 test-all:
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
 install-hooks:
