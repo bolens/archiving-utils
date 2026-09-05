@@ -597,5 +597,95 @@ class Common(Fixture):
         self.assertEqual(json.loads(result.stdout)["error"]["code"], -32700)
 
 
+
+class Publication(Fixture):
+    def assert_no_staging(self):
+        self.assertEqual(list(self.work.glob(".utility-*")), [])
+
+    def test_existing_destination_prevents_callbacks(self):
+        target = self.work / "existing"
+        target.write_bytes(b"original")
+        writer, verifier = mock.Mock(), mock.Mock()
+        with self.assertRaises(FileExistsError):
+            core.publish(target, writer, verifier)
+        writer.assert_not_called()
+        verifier.assert_not_called()
+        self.assertEqual(target.read_bytes(), b"original")
+        self.assert_no_staging()
+
+    def test_writer_failure_cleans_partial_output(self):
+        target = self.work / "output"
+        verifier = mock.Mock()
+        def writer(path):
+            path.write_bytes(b"partial")
+            raise OSError("injected write failure")
+        with self.assertRaisesRegex(OSError, "injected write failure"):
+            core.publish(target, writer, verifier)
+        verifier.assert_not_called()
+        self.assertFalse(target.exists())
+        self.assert_no_staging()
+
+    def test_missing_output_prevents_verification(self):
+        target = self.work / "output"
+        verifier = mock.Mock()
+        with self.assertRaisesRegex(RuntimeError, "produced no output"):
+            core.publish(target, lambda _: None, verifier)
+        verifier.assert_not_called()
+        self.assertFalse(target.exists())
+        self.assert_no_staging()
+
+    def test_fsync_failure_does_not_publish(self):
+        target = self.work / "output"
+        verifier = mock.Mock()
+        with mock.patch.object(core.os, "fsync", side_effect=OSError("injected sync failure")):
+            with self.assertRaisesRegex(OSError, "injected sync failure"):
+                core.publish(target, lambda p: p.write_bytes(b"complete"), verifier)
+        verifier.assert_called_once()
+        self.assertFalse(target.exists())
+        self.assert_no_staging()
+
+    def test_link_failure_cleans_verified_output(self):
+        target = self.work / "output"
+        verifier = mock.Mock()
+        with mock.patch.object(core.os, "link", side_effect=OSError("injected link failure")):
+            with self.assertRaisesRegex(OSError, "injected link failure"):
+                core.publish(target, lambda p: p.write_bytes(b"complete"), verifier)
+        verifier.assert_called_once()
+        self.assertFalse(target.exists())
+        self.assert_no_staging()
+
+    def test_verification_precedes_visible_output(self):
+        target = self.work / "output"
+        verified = []
+        def verify(path):
+            self.assertFalse(target.exists())
+            self.assertEqual(path.read_bytes(), b"complete")
+            verified.append(path)
+        core.publish(target, lambda p: p.write_bytes(b"complete"), verify)
+        self.assertEqual(len(verified), 1)
+        self.assertEqual(target.read_bytes(), b"complete")
+        self.assertFalse(verified[0].exists())
+        self.assert_no_staging()
+
+    def test_concurrent_publishers_have_one_winner(self):
+        import threading
+        target = self.work / "output"
+        ready = threading.Barrier(2, timeout=10)
+        def attempt(payload):
+            def writer(path):
+                path.write_bytes(payload)
+                ready.wait()
+            try:
+                core.publish(target, writer, lambda p: self.assertEqual(p.read_bytes(), payload))
+                return payload
+            except FileExistsError:
+                return None
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
+            outcomes = list(pool.map(attempt, [b"first", b"second"]))
+        winners = [value for value in outcomes if value is not None]
+        self.assertEqual(len(winners), 1)
+        self.assertEqual(target.read_bytes(), winners[0])
+        self.assert_no_staging()
+
 if __name__ == "__main__":
     unittest.main()
