@@ -197,9 +197,9 @@ def load_args(tool, argv):
         / "config.json"
     )
     config = {}
-    if args.config or config_path.exists():
+    if args.config or config_path.exists() or config_path.is_symlink():
         try:
-            config = json.loads(config_path.read_text())
+            config = json.loads(regular(config_path).read_text())
             if not isinstance(config, dict) or set(config) - {"roots", "jobs"}:
                 raise ValueError("only roots and jobs are supported")
             if not isinstance(config.get("roots", []), list) or not all(
@@ -243,7 +243,7 @@ def load_args(tool, argv):
 
 def manifest_entries(path):
     """Accept a saved CLI response or the original bare manifest array."""
-    data = json.loads(path.read_text())
+    data = json.loads(regular(path).read_text())
     if isinstance(data, dict):
         if data.get("tool") != "hash-manifest" or data.get("failures") != []:
             raise ValueError("manifest must be a successful hash-manifest response")

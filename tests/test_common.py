@@ -219,6 +219,50 @@ class Common(Fixture):
         self.file("nested/unicodé\nfile", b"modified")
         self.cli("hash-verify", "--manifest", manifest, self.inputs, code=1)
 
+    def test_manifest_rejects_symlink_paths(self):
+        self.file()
+        manifest = self.home / "manifest.json"
+        manifest.write_text(self.cli("hash-manifest", self.inputs).stdout)
+        link = self.work / "manifest-link.json"
+        link.symlink_to(manifest)
+        directory = self.work / "directory-link"
+        directory.symlink_to(self.home, target_is_directory=True)
+        for path in (link, directory / manifest.name):
+            with self.subTest(path=str(path)):
+                result = self.cli("hash-verify", "--manifest", path, self.inputs, code=1)
+                self.assertIn("symlink input is not supported", result.stderr)
+                self.assertEqual(result.stdout, "")
+
+    def test_config_rejects_symlink_paths(self):
+        self.file()
+        config = self.home / "settings.json"
+        config.write_text(json.dumps({"roots": [str(self.inputs)]}))
+        link = self.work / "config-link.json"
+        link.symlink_to(config)
+        directory = self.work / "directory-link"
+        directory.symlink_to(self.home, target_is_directory=True)
+        for path in (link, directory / config.name):
+            with self.subTest(path=str(path)):
+                result = self.cli("library-inventory", "--config", path, code=2)
+                self.assertIn("invalid config", result.stderr)
+                self.assertIn("symlink input is not supported", result.stderr)
+                self.assertEqual(result.stdout, "")
+
+    def test_default_config_rejects_symlinks(self):
+        self.file()
+        config = Path(self.env["XDG_CONFIG_HOME"]) / core.SUITE / "config.json"
+        config.parent.mkdir(parents=True)
+        target = self.home / "settings.json"
+        target.write_text("{}")
+        config.symlink_to(target)
+        for dangling in (False, True):
+            with self.subTest(dangling=dangling):
+                if dangling:
+                    target.unlink()
+                result = self.cli("library-inventory", self.inputs, code=2)
+                self.assertIn("symlink input is not supported", result.stderr)
+                self.assertEqual(result.stdout, "")
+
     def test_manifest_rejects_ambiguous_generation(self):
         self.file()
         other = self.work / "other"

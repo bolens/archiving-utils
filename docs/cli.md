@@ -23,7 +23,7 @@ Exit codes: **0** success, **1** operation or verification failure, **2** usage 
 
 ## Configuration
 
-Optional JSON config: `$XDG_CONFIG_HOME/archiving-utils/config.json`, falling back to `$HOME/.config/archiving-utils/config.json`. `--config PATH` selects another file. It contains only `roots` as an array of path strings and `jobs` as an integer. Paths containing spaces need no special delimiter.
+Optional JSON config: `$XDG_CONFIG_HOME/archiving-utils/config.json`, falling back to `$HOME/.config/archiving-utils/config.json`. `--config PATH` selects another file. It contains only `roots` as an array of path strings and `jobs` as an integer. Paths containing spaces need no special delimiter. Configuration files and their parent paths must not be symlinks. A rejected configuration exits with code 2. A dangling default-config symlink is an error, while an absent default configuration remains optional.
 
 ```json
 {"roots": ["/path/to/library"], "jobs": 2}
@@ -42,7 +42,7 @@ bin/archiving-utils hash-verify --manifest manifest.json ./library
 
 Existing manifests containing only the `results` array remain supported. Verification rejects malformed entries, failed response envelopes, non-relative paths, duplicate paths, and invalid SHA-256 values. Hexadecimal checksums may use either case. Generation rejects duplicate relative paths across input roots before hashing.
 
-Keep the manifest outside the scanned tree. Verification checks the full path set and every SHA-256 hash. Use one root with unique relative paths. `tree-diff` reports differences as data and returns success when the comparison itself completed.
+Manifest files and their parent paths must not be symlinks. A rejected manifest exits with code 1. Keep the manifest outside the scanned tree. Verification checks the full path set and every SHA-256 hash. Use one root with unique relative paths. `tree-diff` reports differences as data and returns success when the comparison itself completed.
 
 ## Duplicate detection
 
