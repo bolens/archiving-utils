@@ -1,0 +1,54 @@
+name: Docker
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '43 12 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  docker:
+    name: Docker runtime
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Build and test the runtime image
+        run: make test-docker
+
+  publish:
+    name: Publish GHCR
+    needs: docker
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/bolens/archiving-utils
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Build and test the exact image to publish
+        run: make test-docker DOCKER_IMAGE="$IMAGE:sha-$GITHUB_SHA"
+      - name: Authenticate to GHCR
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+        run: printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$REGISTRY_USER" --password-stdin
+      - name: Publish tested commit and latest tags
+        run: |
+          docker push "$IMAGE:sha-$GITHUB_SHA"
+          docker tag "$IMAGE:sha-$GITHUB_SHA" "$IMAGE:latest"
+          docker push "$IMAGE:latest"
+      - name: Remove registry credentials
+        if: always()
+        run: docker logout ghcr.io

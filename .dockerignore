@@ -1,0 +1,22 @@
+# Only runtime source enters the build context. Never include libraries or credentials.
+*
+!Dockerfile
+!lib/
+!lib/**
+!conversion/
+!conversion/**
+!util/
+!util/**
+!VERSION
+!LICENSE
+!mcp/
+!mcp/*.py
+!bin/
+!bin/**
+**/__pycache__
+**/*.pyc
+**/.env
+**/.env.*
+**/.git
+**/.cache
+**/node_modules

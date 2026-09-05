@@ -27,3 +27,7 @@ Missing backends return exit code 2 only when an operation needs them. Planning
 and standard ZIP/TAR operations remain available without them. Builds need native
 7z/RAR/RAR5 and Zstandard support. Decoder warnings and unavailable compression
 features fail explicitly rather than silently omitting members.
+
+## Docker
+
+The [Docker guide](docker.md) describes the packaged runtime and its limits.

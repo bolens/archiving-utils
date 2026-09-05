@@ -34,3 +34,8 @@ header checksum errors, truncation, invalid variable integers and missing end
 headers. Native regressions reject stored RAR4 corruption, complete-member volume
 boundaries and Zstandard-wrapped RAR5 corruption before extraction or conversion
 publication. Explicit output filenames cannot override the selected encoder.
+
+`make test-docker` builds the runtime image and tests disposable bind-mounted
+fixtures, non-root ownership, read-only root operation and CLI failure behavior.
+It requires Docker and host Python 3.11+. `CONTAINER_ENGINE=podman` uses rootless
+Podman locally. Docker CI runs this target on every PR and main push.

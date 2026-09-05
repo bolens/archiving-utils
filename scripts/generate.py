@@ -143,7 +143,7 @@ make install-hooks
 make -C {"conversion/" + d["feature"] if d["feature"] in [t["name"] for t in tools if t["category"] == "conversion"] else "util/transform/" + d["feature"]} help
 ```
 
-[CLI and configuration](docs/cli.md) · [Formats and limits](docs/formats.md) · [Architecture](docs/architecture.md) · [MCP](docs/mcp.md) · [Tests](tests/README.md) · [Release procedure](docs/releasing.md) · [Contributing](CONTRIBUTING.md)
+[Docker](docs/docker.md) · [CLI and configuration](docs/cli.md) · [Formats and limits](docs/formats.md) · [Architecture](docs/architecture.md) · [MCP](docs/mcp.md) · [Tests](tests/README.md) · [Release procedure](docs/releasing.md) · [Contributing](CONTRIBUTING.md)
 
 ## Status
 

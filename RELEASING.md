@@ -44,3 +44,12 @@ with the same tooling revision pinned in
 [the workflow](.github/workflows/source-lint.yml). Review exclusions when adding
 source files; generated and imported files retain their native validation.
 Require the new check to pass on the current PR head before merging.
+
+## Container delivery
+
+Docker PR checks build the runtime image and run `make test-docker`. Require
+`Docker runtime` alongside existing checks. Main pushes publish the tested image
+to GHCR with `latest` and full-commit tags. Verify the Publish GHCR job and pull
+and smoke-test the published digest after merge. Roll back by digest as described
+in [Docker](docs/docker.md). Container delivery does not bump VERSION or create a
+source release tag. PR and scheduled jobs never publish packages.
