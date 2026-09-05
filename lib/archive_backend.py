@@ -42,8 +42,22 @@ def library():
 
 def scan(source, consume, max_members):
     with source.open("rb") as header:
-        rar5 = header.read(8) == b"Rar!\x1a\x07\x01\x00"
+        magic = header.read(8)
     checksums = None
+    rar5 = magic == b"Rar!\x1a\x07\x01\x00"
+    if rar5:
+        format_name = "rar5"
+    elif magic.startswith(b"Rar!\x1a\x07\x00"):
+        from rar4_headers import validate
+
+        checksums = validate(source, max_members)
+        format_name = "rar"
+    elif magic.startswith(b"7z\xbc\xaf\x27\x1c"):
+        format_name = "7zip"
+    elif magic.startswith(b"\x28\xb5\x2f\xfd"):
+        format_name = "tar"
+    else:
+        raise ValueError("unsupported native archive signature")
     if rar5:
         from rar5_checksums import entries
 
@@ -71,7 +85,7 @@ def scan(source, consume, max_members):
             return data
 
     try:
-        for suffix in ("format_rar", "format_rar5", "format_7zip", "format_tar", "filter_none"):
+        for suffix in ("format_" + format_name, "filter_none"):
             check(getattr(lib, "archive_read_support_" + suffix)(handle))
         # A warning can indicate an external decompressor fallback. Refuse it.
         with source.open("rb") as source_stream:
@@ -104,13 +118,16 @@ def scan(source, consume, max_members):
             stream = Stream()
             consume(os.fsdecode(name), lib.archive_entry_size(entry), directory, stream)
             if checksums is not None:
-                if index >= len(checksums) or checksums[index][0].rstrip("/") != os.fsdecode(name).rstrip("/"):
-                    raise ValueError("RAR5 header and decoded member names disagree")
+                if index >= len(checksums):
+                    raise ValueError("RAR decoded member count mismatch")
+                declared_name = checksums[index][0]
+                if declared_name is not None and declared_name.rstrip("/") != os.fsdecode(name).rstrip("/"):
+                    raise ValueError("RAR header and decoded member names disagree")
                 expected = checksums[index][1]
                 if not directory and stream.crc != expected:
-                    raise ValueError("RAR5 payload CRC32 mismatch")
+                    raise ValueError("RAR payload CRC32 mismatch")
             index += 1
         if checksums is not None and index != len(checksums):
-            raise ValueError("RAR5 decoded member count mismatch")
+            raise ValueError("RAR decoded member count mismatch")
     finally:
         lib.archive_read_free(handle)

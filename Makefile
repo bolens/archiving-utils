@@ -12,6 +12,7 @@ check:
 check-lib check-mcp check-docs check-tests: check
 test:
 	$(PYTHON) -m unittest discover -s tests -p test_common.py -v
+	$(PYTHON) -m unittest discover -s tests -p test_comic_headers.py -v
 test-functional:
 	$(PYTHON) -m unittest discover -s tests -p 'test_*functional.py' -v
 test-all:

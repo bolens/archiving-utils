@@ -31,7 +31,7 @@ def inventory(rows):
         "page_order": "natural filename order; reader ordering may differ",
         "pages": pages,
         "metadata_files": metadata,
-        "other_files": [row["name"] for row in files if row["name"] not in page_names],
+        "other_files": [row for row in files if row["name"] not in page_names],
         "members": len(rows),
         "bytes": sum(row["bytes"] for row in rows),
     }

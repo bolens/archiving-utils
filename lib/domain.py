@@ -76,8 +76,6 @@ def scan(source, args, sink=None):
             (sink / path).mkdir(parents=True, exist_ok=True)
         result.append(row)
 
-    if source.suffix.lower() == ".cba":
-        raise ValueError("CBA/ACE comic archives are not supported; convert to CBZ with a trusted ACE tool")
     with source.open("rb") as header:
         magic = header.read(8)
     if magic.startswith((b"Rar!\x1a\x07", b"7z\xbc\xaf\x27\x1c", b"\x28\xb5\x2f\xfd")):
@@ -97,7 +95,13 @@ def scan(source, args, sink=None):
                 with archive.open(member) as stream:
                     consume(member.filename, member.file_size, member.is_dir(), stream)
     else:
-        with tarfile.open(source, "r:*") as archive:
+        try:
+            archive = tarfile.open(source, "r:*")
+        except tarfile.ReadError as error:
+            if source.suffix.lower() == ".cba":
+                raise ValueError("CBA/ACE comic archives are not supported; convert to CBZ with a trusted ACE tool") from error
+            raise
+        with archive:
             for member in archive:
                 if not (member.isfile() or member.isdir()):
                     raise ValueError("archive contains a link or special file")

@@ -28,3 +28,9 @@ unsafe paths, native links, encryption, missing volumes, checksum corruption,
 limits and unavailable dependencies. Pinned upstream RAR fixtures and license
 notices live in `tests/fixtures/libarchive`. Test page payloads are opaque synthetic
 bytes because this feature verifies containers, not image decoding.
+
+`make test` also runs dependency-free header tests covering RAR4/RAR5 metadata, CRC-less refusal, zero CRC,
+header checksum errors, truncation, invalid variable integers and missing end
+headers. Native regressions reject stored RAR4 corruption, complete-member volume
+boundaries and Zstandard-wrapped RAR5 corruption before extraction or conversion
+publication. Explicit output filenames cannot override the selected encoder.

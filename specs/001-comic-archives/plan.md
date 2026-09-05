@@ -28,3 +28,14 @@ confirmed the independent-check need. Add bounded RAR5 header CRC validation and
 per-file CRC32 comparison in rar5_checksums.py. Refuse CRC-less RAR5 entries rather
 than claim their payload integrity. The same fixture now fails before extraction
 publication. No extra RAR executable is required at runtime.
+
+## Review corrections
+
+Independent review reproduced stored-RAR4 CRC omission, RAR4 volume completion
+between whole members, and a Zstandard wrapper bypassing the outer RAR5 guard.
+Add RAR4 header/CRC metadata, reject volume/split flags, and restrict each native
+reader to its detected format. Zstandard enables TAR only. Direct parser tests
+exercise rejection without any native library. Inventory exposes hashes for all
+regular files; page-extension expectations are an explicit test-owned contract.
+The explicit-output-name regression also ensures a valid ZIP named .cba is still
+verified by content while actual ACE fails clearly.

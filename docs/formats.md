@@ -52,10 +52,17 @@ unsafe members and decoder errors fail before publication. Native decoders are
 not a hostile-input sandbox: expanded-byte/member limits do not cap their
 internal memory or CPU use. Keep libarchive and compression libraries maintained.
 
-RAR5 header CRCs and decoded payload CRC32 are checked independently of
-libarchive, including stored entries. This protects against the stored-entry
+RAR4/RAR5 header CRCs and decoded payload CRC32 are checked independently of
+libarchive, including stored entries. RAR4 archives require a complete end header;
+volume/split flags are refused even when a volume ends between complete files. This protects against the stored-entry
 checksum gap reproduced with libarchive 3.8.9. RAR5 regular files without a
 CRC32 field, including BLAKE2-only archives, are explicitly refused. RAR Windows
 path separators are normalized by the reader; decoded paths still pass the same
 traversal, collision and link restrictions. For all formats, checksums are
 integrity checks, not proof of authenticity.
+
+Native reader selection is restricted by the outer signature: a Zstandard stream
+must contain TAR, never a nested RAR or 7z container. A misleading `.cba` extension
+does not prevent reading a recognizable supported container; actual ACE remains
+unsupported. Inventory `pages` and `other_files` contain per-file sizes and hashes,
+so sidecars receive the same observable integrity evidence as page files.

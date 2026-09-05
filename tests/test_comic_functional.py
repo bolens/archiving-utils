@@ -1,5 +1,6 @@
 """Comic archive creation, extraction and preservation on disposable fixtures."""
 
+import ctypes
 import ctypes.util
 import hashlib
 import json
@@ -11,6 +12,7 @@ import tarfile
 import unittest
 from unittest import mock
 import zipfile
+import zlib
 from test_common import Fixture, core
 import archive_backend
 import domain
@@ -102,8 +104,9 @@ class Comics(Fixture):
                                  ["-cover.avif", "chapter/01.jpg", "chapter/2.webp", "chapter/10.PNG"])
                 self.assertEqual(result["page_count"], 4)
                 self.assertEqual(result["metadata_files"], ["ComicInfo.xml"])
-                for page in result["pages"]:
-                    self.assertEqual(page["sha256"], hashlib.sha256(expected[page["name"]]).hexdigest())
+                hashes = {row["name"]: row["sha256"] for row in result["pages"] + result["other_files"]}
+                self.assertEqual(hashes, {name: hashlib.sha256(data).hexdigest()
+                                         for name, data in expected.items() if data is not None})
                 target = self.work / (fmt + "-extracted")
                 self.cli("comic-extract", "--apply", "-o", target, archive)
                 self.assertEqual(self.snapshot(target), expected)
@@ -132,9 +135,14 @@ class Comics(Fixture):
             self.assertEqual(self.snapshot(self.inputs), expected)
 
     def test_all_page_extensions_and_zero_pages(self):
-        names = ["p" + ext.upper() for ext in comics.PAGE_EXTENSIONS]
+        expected = {".jpg", ".jpeg", ".jpe", ".jfif", ".png", ".apng", ".webp", ".gif",
+                    ".tif", ".tiff", ".bmp", ".dib", ".avif", ".heic", ".heif", ".jxl",
+                    ".jp2", ".j2k", ".jpf", ".jpx", ".ppm", ".pgm", ".pbm", ".pnm", ".qoi"}
+        names = ["p" + ext.upper() for ext in expected]
         rows = [{"name": name, "directory": False, "bytes": 1, "sha256": "x"} for name in names]
-        self.assertEqual(comics.inventory(rows)["page_count"], len(names))
+        result = comics.inventory(rows)
+        self.assertEqual(result["page_count"], len(names))
+        self.assertEqual({page["name"] for page in result["pages"]}, set(names))
         empty = self.work / "no-pages.cbz"
         with zipfile.ZipFile(empty, "w") as archive:
             archive.writestr("notes.txt", "not a page")
@@ -180,6 +188,73 @@ class Comics(Fixture):
         source = self.file("legacy.cba", b"ACE")
         result = self.cli("comic-info", source, code=1)
         self.assertIn("CBA/ACE", result.stdout)
+
+    @unittest.skipUnless(NATIVE and ctypes.util.find_library("zstd"), "missing native Zstandard backend")
+    def test_zstandard_wrapped_rar_cannot_bypass_crc(self):
+        source = self.rar_fixture("test_read_format_rar5_stored")
+        payload = source.read_bytes().replace(b"hello libarchive", b"jello libarchive")
+        lib = ctypes.CDLL(ctypes.util.find_library("zstd"))
+        lib.ZSTD_compressBound.argtypes = [ctypes.c_size_t]
+        lib.ZSTD_compressBound.restype = ctypes.c_size_t
+        lib.ZSTD_compress.argtypes = [ctypes.c_void_p, ctypes.c_size_t, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+        lib.ZSTD_compress.restype = ctypes.c_size_t
+        capacity = lib.ZSTD_compressBound(len(payload))
+        buffer = ctypes.create_string_buffer(capacity)
+        count = lib.ZSTD_compress(buffer, capacity, payload, len(payload), 1)
+        self.assertLessEqual(count, capacity)
+        wrapped = self.work / "wrapped.cbt.zst"
+        wrapped.write_bytes(buffer.raw[:count])
+        self.cli("comic-verify", wrapped, code=1)
+        for tool, suffix in (("comic-extract", "directory"), ("comic-to-cbz", "cbz")):
+            target = self.work / ("rejected." + suffix)
+            self.cli(tool, "--apply", "-o", target, wrapped, code=1)
+            self.assertFalse(target.exists())
+
+    @unittest.skipUnless(NATIVE, "missing dependency: libarchive/bsdtar")
+    def test_stored_rar4_crc_is_checked_before_publication(self):
+        source = self.rar_fixture("test_read_format_rar_windows")
+        raw = bytearray(source.read_bytes())
+        # First file's stored payload starts at 7 + 13 + 67 in this pinned fixture.
+        self.assertEqual(raw[87:103], b"test text file\r\n")
+        raw[87] ^= 1
+        source.write_bytes(raw)
+        self.cli("comic-verify", source, code=1)
+        for tool, suffix in (("comic-extract", "directory"), ("comic-to-cbz", "cbz")):
+            target = self.work / ("corrupt-rar4." + suffix)
+            self.cli(tool, "--apply", "-o", target, source, code=1)
+            self.assertFalse(target.exists())
+        self.assertEqual(source.read_bytes(), raw)
+
+    @unittest.skipUnless(NATIVE, "missing dependency: libarchive/bsdtar")
+    def test_rar4_complete_member_volume_is_not_published(self):
+        source = self.rar_fixture("test_read_format_rar_windows")
+        data = bytearray(source.read_bytes())
+        offset = 7
+        while offset < len(data):
+            size = int.from_bytes(data[offset + 5:offset + 7], "little")
+            kind = data[offset + 2]
+            flags = int.from_bytes(data[offset + 3:offset + 5], "little")
+            packed = int.from_bytes(data[offset + 7:offset + 11], "little") if flags & 0x8000 else 0
+            if kind in (0x73, 0x7b):
+                flags |= 0x101 if kind == 0x73 else 1
+                data[offset + 3:offset + 5] = flags.to_bytes(2, "little")
+                crc = zlib.crc32(data[offset + 2:offset + size]) & 0xffff
+                data[offset:offset + 2] = crc.to_bytes(2, "little")
+            offset += size + packed
+        source.write_bytes(data)
+        self.cli("comic-verify", source, code=1)
+        for tool, suffix in (("comic-extract", "directory"), ("comic-to-cbz", "cbz")):
+            target = self.work / ("volume." + suffix)
+            self.cli(tool, "--apply", "-o", target, source, code=1)
+            self.assertFalse(target.exists())
+        self.assertEqual(source.read_bytes(), data)
+
+    def test_explicit_output_name_does_not_change_encoder(self):
+        self.seed()
+        target = self.work / "misnamed.cba"
+        self.cli("folder-to-cbz", "--apply", "-o", target, self.inputs)
+        self.assertTrue(zipfile.is_zipfile(target))
+        self.assertEqual(self.info(target)["page_count"], 4)
 
     def test_creation_missing_writer_leaves_no_output(self):
         self.seed()

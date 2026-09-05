@@ -11,5 +11,14 @@
   },
   "test_read_format_rar5_compressed": {
     "test.bin": "588870a2dade35c2650fbb7898c9a9c7f21fce7c281198604e8d0c9737f2c375"
+  },
+  "test_read_format_rar_subblock": {
+    "test.txt": "5a5f16e01faf8adf92eb4499a2d3e93010c4b41dbb7f698f4a8466d9f58e6dd2"
+  },
+  "test_read_format_rar5_multiple_files_solid": {
+    "test1.bin": "7d89f86f9f69d744ffff3fc043e15bf89fc3ffc134ffcbb31d164a99bb8b67b0",
+    "test2.bin": "f81e6fceeeab366306b23466bf6bb3aac2875e0906dc20a8652be0696ceb15a2",
+    "test3.bin": "5e621f2b6ce8fed758c3df8221f994eda55d1e432c7cc4349c34a30ec2e1c43d",
+    "test4.bin": "2627f40180217252956edb9a426e8d3e344adaf89019d3bccbe04f6c3416dcdd"
   }
 }

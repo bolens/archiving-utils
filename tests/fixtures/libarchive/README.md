@@ -8,7 +8,7 @@ See `COPYING` and `TEST-LICENSES` for retained notices.
 Tests decode these text fixtures into disposable `.cbr` files, offline.
 `expected.json` records SHA-256 payloads obtained independently with bsdtar
 3.8.9, plus directory entries. Positive fixtures exercise RAR4 and stored and
-compressed RAR5. Their contents are upstream test text/binary data, not comic
+compressed/solid RAR5, plus RAR4 service headers. Their contents are upstream test text/binary data, not comic
 artwork; comic-info honestly reports zero recognized pages. The `.lnk` file is
 retained as opaque bytes and never executed. Other fixtures exercise encryption,
 symlinks, hardlinks and a missing next volume. No fixture contents are executed.

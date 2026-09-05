@@ -24,3 +24,7 @@ with source file hashes and directory names before no-clobber publication.
 per-member CRC32 values. The streaming reader compares these against decoded
 bytes before any staged output is published. This avoids relying on the native
 stored-RAR5 checksum path. CRC-less RAR5 files are refused explicitly.
+
+RAR4 uses `lib/rar4_headers.py` for header CRCs, volume/split refusal and per-file
+CRC32. Both RAR generations compare decoded bytes against independent checksums.
+The native reader enables only the detected format; Zstandard is limited to TAR.
