@@ -17,3 +17,5 @@ Exclusion tests cover repeated and case-sensitive patterns, relative paths, mult
 Publication checks cover writer failure, missing output, rejected verification, sync/link failures, existing destinations, and two concurrent publishers. They assert that failed outputs stay unpublished and staging files are removed.
 
 Mixed valid/corrupt batches run with one and two workers. Functional checks verify successful output, source retention, absent failed output, nonzero exit status, and matching success/failure reports. These cases run in the existing `make test` and `make test-functional` tiers, and together in `make test-all`.
+
+Archive round-trip checks compare every relative name, file byte, and directory after packing and repacking each ZIP/TAR variant. Fixtures include nested empty directories and Unicode, glob, and newline names.
