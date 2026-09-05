@@ -40,3 +40,11 @@ jobs:
           name: test-results-${{ matrix.python }}
           path: test-results.txt
           if-no-files-found: warn
+
+  workflow-security:
+    name: Workflow security
+    permissions:
+      contents: read
+    uses: bolens/.github/.github/workflows/reusable-actionlint.yml@2e99e898d79a0921d59447073418d9dcd36320e3
+    with:
+      security-audit: true
