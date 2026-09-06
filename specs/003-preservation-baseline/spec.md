@@ -12,6 +12,9 @@ claim that the original work followed Spec Kit. New behavior requires a separate
 change contract. Existing feature specifications remain authoritative within their
 own scope.
 
+[Legacy contracts](legacy-contracts.md) and [48-tool coverage](legacy-coverage.md)
+extend the baseline requirements to every existing command and support surface.
+
 ## User scenarios and testing
 
 ### User story 1: Plan a conversion before writing (P1)
