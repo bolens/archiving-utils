@@ -13,3 +13,24 @@
 ## Verification receipt
 
 On 2026-09-05, `make check test-all` passed 89 tests with no failures or skips against the inspected base. `make check` also passed after adding this baseline. A separate self-review traced catalog generation, dry-run authority, discovery, staged verification and publication, batch failures, and MCP restrictions through the named source and test assertions. No unresolved requirement gap was found within this baseline. This proves the named fixture contracts, not every possible media file or external parser implementation. Hosted checks and delivery are recorded in the PR.
+
+## Legacy completion receipt, 2026-09-06
+
+[Detailed legacy contracts](legacy-contracts.md) cover the original 31 archive
+and library commands. [The 48-tool mapping](legacy-coverage.md) incorporates
+all 17 comic commands under their existing feature specification and covers
+CLI/configuration, MCP, publication, generated site, native backend and delivery
+surfaces. No new implementation defect was confirmed in this pass.
+
+`make check test-all` passed all 94 tests with no skips, including native comic
+formats and the cross-conversion matrix. The first run failed only the renamed
+checkout test because its tracked-file copy omitted the newly untracked spec
+documents; staging those documents made the unchanged fixture pass. Source syntax,
+ShellCheck, generated-file checks, Markdown links and action pins passed.
+
+Separate self-review traced all catalog operations to shared core/domain functions,
+checked differences in inspection versus mutation and finding versus failure exit
+semantics, and preserved existing comic, Docker and development contracts. No
+independent reviewer was used. No source media, live services or generated site
+content changed. Hosted candidate/main checks and GHCR digest validation remain
+delivery gates recorded by the PR.
