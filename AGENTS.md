@@ -1,6 +1,9 @@
 # Agent guidance
 
-Read `docs/architecture.md`, `docs/requirements.md`, and `tests/README.md`.
+Use `docs/architecture.md` for shared-engine or catalog changes,
+`docs/requirements.md` for runtime or codec requirements, and `tests/README.md`
+to select validation for the affected behavior. Read the relevant contract
+before changing it; prose-only edits do not require the entire document set.
 
 - GNU/Linux, Bash entry points, Python 3.11+ shared engine. Modules have no import-time operations.
 - Keep per-tool wrappers thin. `lib/catalog.json` owns tools and generated documentation.
