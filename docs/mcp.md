@@ -1,5 +1,7 @@
 # MCP server
 
+[Documentation](README.md)
+
 Start the local stdio server with explicitly allowed roots:
 
 ```bash

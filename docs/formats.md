@@ -1,5 +1,7 @@
 # Formats and limits
 
+[Documentation](README.md)
+
 ZIP and TAR are the package formats. TAR can be uncompressed or compressed with gzip, bzip2, or xz. Standalone stream compression uses gzip, bzip2, and xz. Repacking changes the container, not file contents.
 
 Packing compares SHA-256 member hashes with the source files. Compression compares decompressed SHA-256 with the source. Archive scans read complete payloads and enforce archive checksums where the format provides them. ZIP CRC and compression integrity are not cryptographic authenticity. TAR has no payload checksum, so use a separately trusted SHA-256 manifest for later authenticity checks.

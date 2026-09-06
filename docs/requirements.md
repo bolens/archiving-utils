@@ -1,5 +1,7 @@
 # Requirements
 
+[Documentation](README.md)
+
 GNU/Linux, Bash 4.3+, Python 3.11+, and GNU Make for development shortcuts. No third-party Python packages are used. Python 3.11 and 3.14 run in CI. ShellCheck is required for `make check`.
 
 Archive operations use Python standard-library ZIP, TAR, gzip, bz2, and lzma modules. Python must include zlib, bz2, and lzma support. Directory publication requires glibc with `renameat2`, available on supported GNU/Linux systems. The original ZIP/TAR/stream commands need no external archive tool. Comic RAR/7z/Zstandard support additionally uses libarchive; writing CB7 and Zstandard CBT uses bsdtar. CI installs libarchive-tools so native format tests run on both Python versions.

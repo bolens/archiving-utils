@@ -1,5 +1,7 @@
 # archiving-utils delivery playbook
 
+[Documentation](docs/README.md)
+
 This repository delivers reviewed source and its generated site from `main`.
 `VERSION` is the CLI version authority. There is no versioned artifact release
 workflow. Do not invent release tags or package publication for documentation or CI maintenance.
