@@ -14,10 +14,11 @@ in
     bashInteractive coreutils findutils gawk git gnugrep gnumake gnused
     diffutils python3 shellcheck cacert libarchive zstd binutils stdenv.cc
   ];
-  env = { SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"; } // lib.optionalAttrs pkgs.stdenv.isLinux {
+  env = { SSL_CERT_FILE = "${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"; } // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
     LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.libarchive pkgs.zstd ];
   };
-  scripts.repo-check.exec = if pkgs.stdenv.isLinux then "make check test-all" else ''
+  scripts.repo-check.exec = if pkgs.stdenv.hostPlatform.isLinux then "make check test-all" else ''
+    set -euo pipefail
     make check
     python3 -m unittest discover -s tests -p test_comic_headers.py -v
     python3 -m unittest discover -s tests -p test_development_container.py -v
