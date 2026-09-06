@@ -98,7 +98,7 @@ def generate():
         for t in tools
     )
     files[Path("docs/catalog.md")] = (
-        f"# Tool catalog\n\n{len(tools)} commands. Generated from `lib/catalog.json`.\n\n| Command | Category | Mode | Purpose |\n|---|---|---|---|\n{rows}\n"
+        f"# Tool catalog\n\n[Documentation](README.md) · [Architecture](architecture.md)\n\n{len(tools)} commands. Generated from `lib/catalog.json`.\n\n| Command | Category | Mode | Purpose |\n|---|---|---|---|\n{rows}\n"
     )
     files[Path("README.md")] = f"""# {suite}
 
@@ -106,7 +106,7 @@ def generate():
 
 {d["intro"]}
 
-**[Browse the site](https://bolens.github.io/{suite}/)** · [Command catalog](docs/catalog.md) · [Architecture diagram](https://bolens.github.io/{suite}/diagrams/architecture.html)
+**[Browse the site](https://bolens.github.io/{suite}/)** · [Documentation](docs/README.md) · [Command catalog](docs/catalog.md) · [Architecture diagram](https://bolens.github.io/{suite}/diagrams/architecture.html)
 
 ## Start here
 

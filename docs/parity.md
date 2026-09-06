@@ -1,5 +1,7 @@
 # Relationship to audio-utils
 
+[Documentation](README.md)
+
 These repositories adopt audio-utils' purpose and layout: small Linux commands for library conversion, inspection, and maintenance, backed by shared logic and a test harness.
 
 | Convention | Sibling implementation |

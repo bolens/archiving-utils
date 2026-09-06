@@ -1,5 +1,7 @@
 # archiving-utils project guide
 
+[Documentation](../../docs/README.md)
+
 Archive preservation utilities for GNU/Linux, using Bash entry points and a Python 3.11+ shared engine.
 
 ## Source ownership
