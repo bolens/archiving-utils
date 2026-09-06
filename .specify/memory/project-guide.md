@@ -34,7 +34,7 @@ validation environments. Follow `RELEASING.md` for protected squash merges.
 
 ## Spec Kit workflow
 
-Create feature specifications only for new work. Record observable acceptance
+Create feature specifications for new work and explicitly requested retrospective baselines. Label retrospective scope and the inspected revision, and distinguish observed behavior from corrective requirements. Record observable acceptance
 criteria in `spec.md`, source ownership and constitution checks in `plan.md`,
 and executable verification in `tasks.md`. Resolve material unknowns before
 implementation. Mark tasks complete only with evidence and retain completed
@@ -45,3 +45,5 @@ manifests. Customize this guide and the constitution; do not hand-edit managed
 files or hashes. Verify project-owned memory survives regeneration. The pinned
 Spec Kit workflow validates integration metadata, managed hashes, constitution
 metadata, and Bash syntax. Follow `RELEASING.md` for delivery.
+
+The retrospective specification register is [specs/README.md](../../specs/README.md).

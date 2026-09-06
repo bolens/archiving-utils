@@ -17,7 +17,11 @@ Read `.specify/memory/constitution.md` and `.specify/memory/project-guide.md`
 before planning substantial changes. Use Spec Kit for new capabilities,
 architecture, security-sensitive behavior, migrations, and coordinated changes.
 Keep narrow fixes and prose maintenance in the normal PR workflow. Retain
-completed feature history; do not backfill specifications for finished code.
+completed feature history. Backfill finished work only when explicitly requested. Label those
+specifications as retrospective baselines, record the inspected revision, and map
+requirements to source and acceptance evidence. Separate observed behavior from
+corrective requirements. Never imply the specification preceded its code or mark
+unverified checks complete.
 Follow `RELEASING.md` for push, merge, delivery, and recovery.
 
 ## Context and handoffs
