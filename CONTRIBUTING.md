@@ -5,3 +5,7 @@ Keep commands focused and tool directories thin. Add catalog entries in `lib/cat
 Add fixture-based coverage for observable behavior and failure cases. Run `make check test-all` before opening a pull request. Report optional dependency skips. Never use a personal library as test data.
 
 Explain what changed, why, and which tests ran in pull requests. Keep output verification, source retention, offline defaults, and filename handling intact.
+
+## Reproducible development
+
+Use the [development environments guide](docs/development-environments.md) for devenv, Docker, Podman, and Apple container.

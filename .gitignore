@@ -7,3 +7,11 @@ __pycache__/
 .ruff_cache/
 .venv/
 .coverage.*
+
+# devenv and local overrides
+.devenv/
+.direnv/
+devenv.local.nix
+devenv.local.yaml
+.devenv.flake.nix
+.devenv.*/
