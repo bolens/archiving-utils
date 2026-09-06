@@ -33,8 +33,8 @@ Use disposable fixtures and isolated HOME/XDG/TMPDIR values. Preserve exit codes
 
 ## Governance
 
-Read `AGENTS.md`, `docs/architecture.md`, `docs/requirements.md`, and
-`tests/README.md`. Safety or compatibility exceptions need explicit rationale,
+Use `AGENTS.md` to select architecture, requirements, and testing documentation
+for the affected contract. Safety or compatibility exceptions need explicit rationale,
 acceptance evidence, and a constitution version update.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-05 | **Last Amended**: 2026-09-05
+**Version**: 1.0.1 | **Ratified**: 2026-09-05 | **Last Amended**: 2026-09-06
