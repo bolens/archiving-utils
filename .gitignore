@@ -15,3 +15,13 @@ devenv.local.nix
 devenv.local.yaml
 .devenv.flake.nix
 .devenv.*/
+
+# Shared VS Code configuration; keep personal editor state ignored.
+!/.vscode/
+/.vscode/*
+!/.vscode/settings.json
+!/.vscode/extensions.json
+!/.vscode/tasks.json
+!/.vscode/launch.json
+!/.vscode/*.code-snippets
+!/.vscode/README.md
