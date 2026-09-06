@@ -2,3 +2,8 @@ __pycache__/
 *.pyc
 .coverage
 .test-artifacts/
+
+# Local tooling and runtime artifacts
+.ruff_cache/
+.venv/
+.coverage.*
