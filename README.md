@@ -48,3 +48,8 @@ make -C conversion/folder-to-tar-xz help
 Initial 0.1.0 implementation. This is a sibling suite, not a claim of identical feature maturity or codec coverage to audio-utils. The [parity notes](docs/parity.md) explain the implemented conventions and deliberate differences.
 
 [MIT license](LICENSE). External encoders keep their own licenses.
+
+## License scope and attribution
+
+See [third-party notices](THIRD_PARTY_NOTICES.md) for the project license scope,
+retained upstream notices, and dependency or asset exceptions.
