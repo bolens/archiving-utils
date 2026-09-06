@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "archiving-utils": {
+      "command": "python3",
+      "args": [
+        "/absolute/path/to/archiving-utils/mcp/server.py",
+        "--allow-root",
+        "/absolute/path/to/library"
+      ]
+    }
+  }
+}

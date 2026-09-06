@@ -16,6 +16,9 @@ devenv.local.yaml
 .devenv.flake.nix
 .devenv.*/
 
+# Copy .mcp.json.example locally and set explicit checkout/resource paths.
+/.mcp.json
+
 # Shared VS Code configuration; keep personal editor state ignored.
 !/.vscode/
 /.vscode/*
