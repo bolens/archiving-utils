@@ -15,3 +15,6 @@ devenv.local.nix
 devenv.local.yaml
 .devenv.flake.nix
 .devenv.*/
+
+# Copy .mcp.json.example locally and set explicit checkout/resource paths.
+/.mcp.json
