@@ -4,7 +4,7 @@
 
 Package, inspect, compare, and recover local archives. Every compression pipeline checks the round trip before publishing its output.
 
-**[Browse the site](https://bolens.github.io/archiving-utils/)** · [Command catalog](docs/catalog.md) · [Architecture diagram](https://bolens.github.io/archiving-utils/diagrams/architecture.html)
+**[Browse the site](https://bolens.github.io/archiving-utils/)** · [Documentation](docs/README.md) · [Command catalog](docs/catalog.md) · [Architecture diagram](https://bolens.github.io/archiving-utils/diagrams/architecture.html)
 
 ## Start here
 

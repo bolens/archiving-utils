@@ -1,5 +1,7 @@
 # Tool catalog
 
+[Documentation](README.md) · [Architecture](architecture.md)
+
 48 commands. Generated from `lib/catalog.json`.
 
 | Command | Category | Mode | Purpose |

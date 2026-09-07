@@ -1,7 +1,9 @@
 # Agent guidance
 
-Use `docs/architecture.md` for shared-engine or catalog changes,
-`docs/requirements.md` for runtime or codec requirements, and `tests/README.md`
+[Documentation](docs/README.md) maps architecture, deployment, state, and document ownership.
+
+Use [docs/architecture.md](docs/architecture.md) for shared-engine or catalog changes,
+[docs/requirements.md](docs/requirements.md) for runtime or codec requirements, and [tests/README.md](tests/README.md)
 to select validation for the affected behavior. Read the relevant contract
 before changing it; prose-only edits do not require the entire document set.
 
@@ -14,28 +16,19 @@ before changing it; prose-only edits do not require the entire document set.
 - Run `make check test-all` before publication. Report dependency skips honestly.
 - Update generated tools, docs, and site with `make generate`, then run `make check`.
 
-## Spec-driven changes
+## Planning and evidence
 
-Read `.specify/memory/constitution.md` and `.specify/memory/project-guide.md`
-before planning substantial changes. Use Spec Kit for new capabilities,
-architecture, security-sensitive behavior, migrations, and coordinated changes.
-Keep narrow fixes and prose maintenance in the normal PR workflow. Retain
-completed feature history. Backfill finished work only when explicitly requested. Label those
-specifications as retrospective baselines, record the inspected revision, and map
-requirements to source and acceptance evidence. Separate observed behavior from
-corrective requirements. Never imply the specification preceded its code or mark
-unverified checks complete.
-Follow `RELEASING.md` for push, merge, delivery, and recovery.
+Use the [project guide](.specify/memory/project-guide.md) and
+[constitution](.specify/memory/constitution.md) for substantial changes. The guide
+owns Spec Kit scope, retained history, retrospective requirements, and acceptance
+evidence. Prose maintenance uses the normal repository workflow.
 
 ## Context and handoffs
 
-- Locate source with targeted searches before reading. For exploratory reads of
-  files over 350 lines, select relevant ranges. Read required guidance and actual
-  source before edits or correctness claims; summaries do not replace them.
-- When delegation is permitted, give each worker one question or concrete output,
-  allowed paths, and a check. Return findings with source locations, changed paths,
-  and verification gaps. Keep final review with the coordinating agent.
-- Record durable user corrections in the [project guide](.specify/memory/project-guide.md)
-  or owning contract with scope, reason, and evidence. Replace superseded advice;
-  read relevant corrections before reusing assumptions. Keep temporary progress
-  in task notes and preserve existing authority rules.
+- Search before reading. Use bounded source excerpts for exploratory reads over
+  350 lines, and inspect required guidance and actual source before editing.
+- When delegation is permitted, assign a bounded question or output, paths, and
+  check. Return source locations, changes, and verification gaps for final review.
+- Keep durable corrections in the [project guide](.specify/memory/project-guide.md)
+  or owning contract. Replace superseded advice and read it before reuse.
+  Temporary progress belongs in task notes. Preserve existing authority rules.

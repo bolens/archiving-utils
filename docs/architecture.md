@@ -1,5 +1,7 @@
 # Architecture
 
+[Documentation](README.md)
+
 [Interactive Archify diagram](https://bolens.github.io/archiving-utils/diagrams/architecture.html) · [Diagram source](diagrams/architecture.json)
 
 `bin/archiving-utils` dispatches to `lib/core.py`. Per-tool Bash scripts and Makefiles are generated from `lib/catalog.json`. The catalog owns names, descriptions, extensions, output formats, and operation types.
