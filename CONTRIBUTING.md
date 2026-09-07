@@ -11,3 +11,8 @@ Explain what changed, why, and which tests ran in pull requests. Keep output ver
 ## Reproducible development
 
 Use the [development environments guide](docs/development-environments.md) for devenv, Docker, Podman, and Apple container.
+
+## Devcontainer
+
+See [the devcontainer guide](.devcontainer/README.md) for the repository toolchain,
+setup, checks and platform limits.
