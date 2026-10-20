@@ -2,6 +2,8 @@
 import importlib.util
 import json
 import re
+import shutil
+import sys
 import subprocess
 import tempfile
 from fnmatch import fnmatchcase
@@ -81,29 +83,32 @@ class DevelopmentWorkflowTests(unittest.TestCase):
         self.assertEqual(config['postCreateCommand'], ['bash', '.devcontainer/post-create.sh'])
 
     def record(self, *, uid='1001', build_exit='0'):
+        bash = shutil.which('bash')
+        self.assertIsNotNone(bash, 'workflow fixture requires the declared Bash dependency')
         with tempfile.TemporaryDirectory(prefix='devcontainer workflow ') as directory:
             root = Path(directory).resolve()
             binary = root / 'bin'
             binary.mkdir()
             trace = root / 'docker.jsonl'
             identity = binary / 'id'
-            identity.write_text('#!/bin/sh\ncase "$1" in -u) printf "%s\\n" "$TEST_UID";; -g) printf "1001\\n";; *) exit 91;; esac\n')
+            identity.write_text(f'#!{sys.executable}\nimport os,sys\nif sys.argv[1] not in ("-u","-g"):sys.exit(91)\nprint(os.environ["TEST_UID"] if sys.argv[1]=="-u" else "1001")\n')
             identity.chmod(0o755)
             docker = binary / 'docker'
-            docker.write_text('#!/usr/bin/python3\nimport json,os,sys\nwith open(os.environ["TRACE"],"a") as stream:stream.write(json.dumps(sys.argv[1:])+"\\n")\nif sys.argv[1]=="build":sys.exit(int(os.environ["BUILD_EXIT"]))\n')
+            docker.write_text(f'#!{sys.executable}\nimport json,os,sys\nwith open(os.environ["TRACE"],"a") as stream:stream.write(json.dumps(sys.argv[1:])+"\\n")\nif sys.argv[1]=="build":sys.exit(int(os.environ["BUILD_EXIT"]))\n')
             docker.chmod(0o755)
             script = root / 'workflow.sh'
             script.write_text(self.smoke_script())
-            result = subprocess.run(['bash', str(script)], cwd=root, capture_output=True,
-                                    env={'PATH': str(binary) + ':/usr/bin:/bin', 'HOME': str(root),
+            result = subprocess.run([bash, str(script)], cwd=root, capture_output=True,
+                                    env={'PATH': str(binary), 'HOME': str(root),
                                          'TRACE': str(trace), 'TEST_UID': uid, 'BUILD_EXIT': build_exit},
                                     timeout=10)
+            self.last_record_stderr = result.stderr.decode('utf-8', 'replace')
             calls = [json.loads(line) for line in trace.read_text().splitlines()] if trace.exists() else []
             return result.returncode, calls, str(root)
 
     def test_real_devcontainer_context_and_smoke_are_nonroot_without_host_socket(self):
         status, calls, root = self.record()
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 0, self.last_record_stderr)
         self.assertEqual(len(calls), 2)
         self.assertEqual(calls[0], ['build', '--pull', '--tag', 'archiving-utils-devcontainer:ci', '.devcontainer'])
         run = calls[1]
@@ -126,7 +131,7 @@ class DevelopmentWorkflowTests(unittest.TestCase):
             alias.symlink_to(physical, target_is_directory=True)
             with patch.object(tempfile, 'tempdir', str(alias)):
                 status, calls, root = self.record()
-            self.assertEqual(status, 0)
+            self.assertEqual(status, 0, self.last_record_stderr)
             self.assertEqual(len(calls), 2)
             self.assertEqual(Path(root).parent, physical)
             run = calls[1]
@@ -138,7 +143,7 @@ class DevelopmentWorkflowTests(unittest.TestCase):
         self.assertNotEqual(status, 0)
         self.assertEqual(calls, [])
         status, calls, _ = self.record(build_exit='19')
-        self.assertEqual(status, 19)
+        self.assertEqual(status, 19, self.last_record_stderr)
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][0], 'build')
 
