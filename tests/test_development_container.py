@@ -1,5 +1,12 @@
 """CLI contracts for local development image adapters."""
 import importlib.util
+import json
+import re
+import shutil
+import sys
+import subprocess
+import tempfile
+from fnmatch import fnmatchcase
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -40,6 +47,105 @@ class DevelopmentContainerTests(unittest.TestCase):
         with self.assertRaises(SystemExit) as result:
             MODULE.main(["run", "docker"])
         self.assertEqual(result.exception.code, 2)
+
+
+class DevelopmentWorkflowTests(unittest.TestCase):
+    """Exercise the selected workflow shell using only recording executables."""
+
+    def workflow(self):
+        return (Path(__file__).resolve().parents[1] / ".github/workflows/devenv.yml").read_text()
+
+    def smoke_script(self):
+        source = self.workflow()
+        start = source.index("      - name: Validate VS Code devcontainer image\n")
+        step = source[start:source.index("\n  result:", start)]
+        self.assertIn("        if: runner.os == 'Linux'\n", step)
+        script = step.split("        run: |\n", 1)[1]
+        return "\n".join(line[10:] for line in script.splitlines()) + "\n"
+
+    def test_devcontainer_changes_select_environment_and_existing_nix_proof_stays(self):
+        source = self.workflow()
+        block = source.split("            environment:\n", 1)[1].split("\n\n", 1)[0]
+        patterns = re.findall(r"^              - '([^']+)'$", block, re.M)
+        self.assertEqual(patterns.count('.devcontainer/**'), 1)
+        for path in ('.devcontainer/Dockerfile', '.devcontainer/devcontainer.json',
+                     '.devcontainer/post-create.sh', '.devcontainer/smoke.sh',
+                     '.devcontainer/.dockerignore', '.devcontainer/nested/helper.sh'):
+            self.assertTrue(any(fnmatchcase(path, item) for item in patterns), path)
+        self.assertFalse(any(fnmatchcase('unselected.tmp', item) for item in patterns))
+        self.assertIn('python3 scripts/development-container.py build docker', source)
+        self.assertIn('python3 scripts/development-container.py run docker -- make check test-all', source)
+        config = json.loads((Path(__file__).resolve().parents[1] / '.devcontainer/devcontainer.json').read_text())
+        self.assertEqual(config['build'], {'dockerfile': 'Dockerfile', 'context': '.'})
+        self.assertEqual(config['workspaceFolder'], '/workspace')
+        self.assertEqual(config['remoteUser'], 'vscode')
+        self.assertTrue(config['updateRemoteUserUID'])
+        self.assertEqual(config['postCreateCommand'], ['bash', '.devcontainer/post-create.sh'])
+
+    def record(self, *, uid='1001', build_exit='0'):
+        bash = shutil.which('bash')
+        self.assertIsNotNone(bash, 'workflow fixture requires the declared Bash dependency')
+        with tempfile.TemporaryDirectory(prefix='devcontainer workflow ') as directory:
+            root = Path(directory).resolve()
+            binary = root / 'bin'
+            binary.mkdir()
+            trace = root / 'docker.jsonl'
+            identity = binary / 'id'
+            identity.write_text(f'#!{sys.executable}\nimport os,sys\nif sys.argv[1] not in ("-u","-g"):sys.exit(91)\nprint(os.environ["TEST_UID"] if sys.argv[1]=="-u" else "1001")\n')
+            identity.chmod(0o755)
+            docker = binary / 'docker'
+            docker.write_text(f'#!{sys.executable}\nimport json,os,sys\nwith open(os.environ["TRACE"],"a") as stream:stream.write(json.dumps(sys.argv[1:])+"\\n")\nif sys.argv[1]=="build":sys.exit(int(os.environ["BUILD_EXIT"]))\n')
+            docker.chmod(0o755)
+            script = root / 'workflow.sh'
+            script.write_text(self.smoke_script())
+            result = subprocess.run([bash, str(script)], cwd=root, capture_output=True,
+                                    env={'PATH': str(binary), 'HOME': str(root),
+                                         'TRACE': str(trace), 'TEST_UID': uid, 'BUILD_EXIT': build_exit},
+                                    timeout=10)
+            self.last_record_stderr = result.stderr.decode('utf-8', 'replace')
+            calls = [json.loads(line) for line in trace.read_text().splitlines()] if trace.exists() else []
+            return result.returncode, calls, str(root)
+
+    def test_real_devcontainer_context_and_smoke_are_nonroot_without_host_socket(self):
+        status, calls, root = self.record()
+        self.assertEqual(status, 0, self.last_record_stderr)
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(calls[0], ['build', '--pull', '--tag', 'archiving-utils-devcontainer:ci', '.devcontainer'])
+        run = calls[1]
+        self.assertEqual(run[:4], ['run', '--rm', '--network=none', '--read-only'])
+        self.assertIn('--cap-drop=ALL', run)
+        self.assertIn('--security-opt=no-new-privileges', run)
+        self.assertEqual(run[run.index('--user') + 1], '1001:1001')
+        self.assertEqual(run[run.index('--mount') + 1], f'type=bind,source={root},target=/workspace')
+        self.assertEqual(run.count('--mount'), 1)
+        self.assertNotIn('/var/run/docker.sock', ' '.join(run))
+        self.assertIn('HOME=/tmp', run)
+        self.assertEqual(run[-5:], ['--workdir', '/workspace', 'archiving-utils-devcontainer:ci', 'bash', '.devcontainer/post-create.sh'])
+
+    def test_symlinked_temporary_parent_matches_physical_shell_workdir(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory).resolve()
+            physical = parent / 'physical temporary parent'
+            physical.mkdir()
+            alias = parent / 'temporary alias'
+            alias.symlink_to(physical, target_is_directory=True)
+            with patch.object(tempfile, 'tempdir', str(alias)):
+                status, calls, root = self.record()
+            self.assertEqual(status, 0, self.last_record_stderr)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(Path(root).parent, physical)
+            run = calls[1]
+            self.assertEqual(run[run.index('--mount') + 1], f'type=bind,source={root},target=/workspace')
+            self.assertNotIn(str(alias), ' '.join(run))
+
+    def test_root_or_failed_build_cannot_reach_smoke(self):
+        status, calls, _ = self.record(uid='0')
+        self.assertNotEqual(status, 0)
+        self.assertEqual(calls, [])
+        status, calls, _ = self.record(build_exit='19')
+        self.assertEqual(status, 19, self.last_record_stderr)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], 'build')
 
 
 if __name__ == "__main__":

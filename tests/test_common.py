@@ -1,6 +1,8 @@
 """Shared behavior tests using only isolated disposable trees."""
 
 import json
+import hashlib
+import io
 import concurrent.futures
 from unittest import mock
 import os
@@ -58,6 +60,47 @@ class Fixture(unittest.TestCase):
 
 
 class Common(Fixture):
+    def test_digest_matches_sha256_and_preserves_source(self):
+        for size in (0, 1, 1024 * 1024 + 37):
+            with self.subTest(size=size):
+                data = (bytes(range(256)) * (size // 256 + 1))[:size]
+                source = self.file("digest.bin", data)
+                before = source.stat()
+                self.assertEqual(core.digest(source), hashlib.sha256(data).hexdigest())
+                after = source.stat()
+                self.assertEqual(source.read_bytes(), data)
+                self.assertEqual((before.st_ino, before.st_size, before.st_mtime_ns,
+                                  before.st_ctime_ns, before.st_mode),
+                                 (after.st_ino, after.st_size, after.st_mtime_ns,
+                                  after.st_ctime_ns, after.st_mode))
+
+    def test_digest_handles_short_reads_without_unbounded_reads(self):
+        data = b"short reads" * 1000
+
+        class ShortReads(io.BytesIO):
+            def read(self, size=-1):
+                if not 0 < size <= 1024 * 1024:
+                    raise AssertionError("unbounded digest read")
+                return super().read(min(size, 7))
+
+        stream = ShortReads(data)
+        source = mock.Mock()
+        source.open.return_value = stream
+        self.assertEqual(core.digest(source), hashlib.sha256(data).hexdigest())
+        self.assertTrue(stream.closed)
+
+    def test_digest_propagates_read_failure_and_closes_stream(self):
+        class BrokenRead(io.BytesIO):
+            def read(self, size=-1):
+                raise OSError("read failed")
+
+        stream = BrokenRead(b"partial")
+        source = mock.Mock()
+        source.open.return_value = stream
+        with self.assertRaisesRegex(OSError, "read failed"):
+            core.digest(source)
+        self.assertTrue(stream.closed)
+
     def test_fixture_replaces_inherited_xdg_paths(self):
         caller = self.work / "caller-state"
         caller.mkdir()

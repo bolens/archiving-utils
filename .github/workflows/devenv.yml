@@ -31,6 +31,7 @@ jobs:
           filters: |
             environment:
               - 'devenv.*'
+              - '.devcontainer/**'
               - '.github/workflows/devenv.yml'
               - 'Makefile'
               - 'bin/**'
@@ -75,6 +76,22 @@ jobs:
         run: |
           python3 scripts/development-container.py build docker
           python3 scripts/development-container.py run docker -- make check test-all
+      - name: Validate VS Code devcontainer image
+        if: runner.os == 'Linux'
+        run: |
+          set -euo pipefail
+          # Match updateRemoteUserUID without changing checkout ownership.
+          test "$(id -u)" -ne 0
+          docker build --pull --tag archiving-utils-devcontainer:ci .devcontainer
+          docker run --rm --network=none --read-only \
+            --cap-drop=ALL --security-opt=no-new-privileges \
+            --user "$(id -u):$(id -g)" \
+            --tmpfs /tmp:rw,nosuid,nodev,size=67108864,mode=1777 \
+            --env HOME=/tmp --env XDG_CONFIG_HOME=/tmp/config \
+            --env XDG_CACHE_HOME=/tmp/cache --env XDG_STATE_HOME=/tmp/state \
+            --mount "type=bind,source=$PWD,target=/workspace" \
+            --workdir /workspace archiving-utils-devcontainer:ci \
+            bash .devcontainer/post-create.sh
 
   result:
     name: Development environment
