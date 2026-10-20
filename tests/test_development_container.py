@@ -82,7 +82,7 @@ class DevelopmentWorkflowTests(unittest.TestCase):
 
     def record(self, *, uid='1001', build_exit='0'):
         with tempfile.TemporaryDirectory(prefix='devcontainer workflow ') as directory:
-            root = Path(directory)
+            root = Path(directory).resolve()
             binary = root / 'bin'
             binary.mkdir()
             trace = root / 'docker.jsonl'
@@ -116,6 +116,22 @@ class DevelopmentWorkflowTests(unittest.TestCase):
         self.assertNotIn('/var/run/docker.sock', ' '.join(run))
         self.assertIn('HOME=/tmp', run)
         self.assertEqual(run[-5:], ['--workdir', '/workspace', 'archiving-utils-devcontainer:ci', 'bash', '.devcontainer/post-create.sh'])
+
+    def test_symlinked_temporary_parent_matches_physical_shell_workdir(self):
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory).resolve()
+            physical = parent / 'physical temporary parent'
+            physical.mkdir()
+            alias = parent / 'temporary alias'
+            alias.symlink_to(physical, target_is_directory=True)
+            with patch.object(tempfile, 'tempdir', str(alias)):
+                status, calls, root = self.record()
+            self.assertEqual(status, 0)
+            self.assertEqual(len(calls), 2)
+            self.assertEqual(Path(root).parent, physical)
+            run = calls[1]
+            self.assertEqual(run[run.index('--mount') + 1], f'type=bind,source={root},target=/workspace')
+            self.assertNotIn(str(alias), ' '.join(run))
 
     def test_root_or_failed_build_cannot_reach_smoke(self):
         status, calls, _ = self.record(uid='0')
