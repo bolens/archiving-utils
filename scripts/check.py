@@ -47,11 +47,21 @@ def managed_spec_kit_files():
     return managed
 
 
+def project_sources(pattern):
+    """Skip only the repository's ignored generated Nix/direnv directories."""
+    for path in ROOT.rglob(pattern):
+        directories = path.relative_to(ROOT).parts[:-1]
+        if directories and (directories[0] in {".devenv", ".direnv"}
+                            or directories[0].startswith(".devenv.")):
+            continue
+        yield path
+
+
 def main():
     managed = managed_spec_kit_files()
-    for path in ROOT.rglob("*.py"):
+    for path in project_sources("*.py"):
         ast.parse(path.read_text(), filename=str(path))
-    scripts = sorted(path for path in ROOT.rglob("*.sh") if path not in managed) + [
+    scripts = sorted(path for path in project_sources("*.sh") if path not in managed) + [
         ROOT / "bin" / core.SUITE,
         ROOT / ".githooks/pre-commit",
     ]
@@ -62,7 +72,7 @@ def main():
         [sys.executable, str(ROOT / "scripts/generate.py"), "--check"], check=True
     )
     errors = []
-    for path in ROOT.rglob("*.md"):
+    for path in project_sources("*.md"):
         if path in managed:
             continue
         for link in re.findall(r"\[[^\]]*\]\(([^)]+)\)", path.read_text()):

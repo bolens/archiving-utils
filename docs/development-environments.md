@@ -70,3 +70,9 @@ not enable global acceptance of arbitrary repository flake configuration.
 Require real native PR and main execution, plus the retained actual Docker
 image check, before accepting the upgrade; platform and cache warnings must
 be absent.
+
+Project source checks omit the ignored `.devenv/`, `.devenv.*/` and `.direnv/`
+directories at the repository root. Their generated shell, Python and Markdown
+files are tool state. New source files elsewhere still receive syntax,
+ShellCheck and local-link validation. Existing managed Spec Kit integrity
+checks run before their style exemptions.
