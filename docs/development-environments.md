@@ -41,3 +41,11 @@ python3 scripts/development-container.py run apple -- make check test-all
 The helper exports an OCI archive and uses `container image load`. Native ARM Macs target `aarch64-linux`; x86 Linux builds target `x86_64-linux`. [Building Linux images from macOS requires a Linux builder](https://devenv.sh/containers/). This workflow does not assume Apple container implements Docker Compose or Docker's daemon API.
 
 Apple execution is not verified by Linux tests. The product targets GNU/Linux. Native macOS checks exercise the development toolset; use a Linux container for Linux runtime behavior. Linux glibc directory publication and native archive backends determine functional coverage. Tests use disposable generated media and retain sources.
+
+## Woodpecker
+
+The shared CI site executes the same locked `devenv test` in a fresh Linux
+container on either `ci01` (Bamboo) or `ci02` (Grove). The job has no publishing
+credentials, privileged mode, host Docker socket, or host Nix store. See the
+[validation contract](../specs/003-woodpecker-validation/spec.md) and
+[delivery playbook](../RELEASING.md) for acceptance and hosted-check coexistence.
