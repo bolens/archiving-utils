@@ -55,3 +55,18 @@ Docker acceptance. Devcontainer-only edits select a hosted build of the actual
 Dockerfile and an isolated setup smoke. A native Nix success alone does not prove
 a devcontainer update works. Review Woodpecker image pins monthly and after
 security releases; update through a reviewed PR with native evidence.
+
+## Nix compatibility and warning checks
+
+Use devenv 2.4.0 at the reviewed CLI commit and the locked nix2container
+revision. Keep the existing git-hooks inputs explicit when upgrading the CLI.
+The disposable Nix image retains its standard `nixbld` build users; builds
+must not run as root or create the `/homeless-shelter` placeholder. The container
+helper places `--registry` on the `copy` subcommand, as required by this CLI.
+
+Accept flake configuration only on the immutable CLI invocation. Its reviewed
+configuration adds the two official public caches and their signing keys. Do
+not enable global acceptance of arbitrary repository flake configuration.
+Require real native PR and main execution, plus the retained actual Docker
+image check, before accepting the upgrade; platform and cache warnings must
+be absent.
