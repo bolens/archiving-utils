@@ -55,3 +55,13 @@ to GHCR with `latest` and full-commit tags. Verify the Publish GHCR job and pull
 and smoke-test the published digest after merge. Roll back by digest as described
 in [Docker](docs/docker.md). Container delivery does not bump VERSION or create a
 source release tag. PR and scheduled jobs never publish packages.
+
+## Woodpecker validation
+
+[The Woodpecker contract](specs/003-woodpecker-validation/spec.md) runs the locked
+Linux `devenv test` on the shared CI site, without publishing credentials or host
+mounts. During rollout, require the native current-head result as well as the
+existing applicable GitHub checks. Preserve Python compatibility, macOS, Docker,
+and publishing coverage; retire duplicate Linux native work only after genuine
+PR and main success. Check the actual merged-main pipeline before declaring
+rollout complete. No product release is part of this automation change.

@@ -12,3 +12,7 @@ Installation validation alone does not establish feature completion.
 
 The preservation baseline includes [legacy contracts](003-preservation-baseline/legacy-contracts.md)
 and a [complete 48-tool mapping](003-preservation-baseline/legacy-coverage.md).
+
+- [Woodpecker validation](003-woodpecker-validation/spec.md):
+  [plan](003-woodpecker-validation/plan.md),
+  [tasks](003-woodpecker-validation/tasks.md).
