@@ -76,3 +76,69 @@ class ManagedChecks(unittest.TestCase):
         )
         with self.assertRaisesRegex(SystemExit, "unsafe.*path"):
             CHECK.managed_spec_kit_files()
+
+    def project_fixture(self):
+        """Run the actual checker on a small complete source tree."""
+        (self.manifests / "speckit.manifest.json").write_text('{"files": {}}')
+        files = {
+            "scripts/generate.py": "# Fixture generator has no outputs.\n",
+            "scripts/source.py": "value = 1\n",
+            "scripts/source.sh": "#!/usr/bin/env bash\ntrue\n",
+            "bin/" + CHECK.core.SUITE: "#!/usr/bin/env bash\ntrue\n",
+            ".githooks/pre-commit": "#!/usr/bin/env bash\ntrue\n",
+            "README.md": "[Source](scripts/source.sh)\n",
+            "site/index.html": "fixture\n",
+            "site/style.css": "fixture\n",
+            "site/app.js": "fixture\n",
+            "site/diagrams/architecture.html": "fixture\n",
+        }
+        for relative, content in files.items():
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(content)
+
+    def test_generated_nix_shells_are_not_project_shell_sources(self):
+        self.project_fixture()
+        for directory in (".devenv", ".devenv.instance", ".direnv"):
+            path = self.root / directory / "shell-generated.sh"
+            path.parent.mkdir()
+            path.write_text("#!/usr/bin/env bash\nif then\n")
+        CHECK.main()
+
+    def test_generated_nix_python_and_links_are_not_project_sources(self):
+        self.project_fixture()
+        state = self.root / ".devenv"
+        state.mkdir()
+        (state / "generated.py").write_text("if then\n")
+        (state / "generated.md").write_text("[Generated](missing-generated-file)\n")
+        CHECK.main()
+
+    def test_new_shell_sources_still_fail_real_shellcheck(self):
+        self.project_fixture()
+        for relative in ("scripts/new-source.sh", ".devcontainer/new-source.sh",
+                         ".devenv.source.sh"):
+            with self.subTest(relative=relative):
+                path = self.root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("#!/usr/bin/env bash\nif then\n")
+                real_run = CHECK.subprocess.run
+                with patch.object(CHECK.subprocess, "run", side_effect=lambda *args, **kwargs:
+                                  real_run(*args, capture_output=True, **kwargs)):
+                    with self.assertRaises(CHECK.subprocess.CalledProcessError) as error:
+                        CHECK.main()
+                self.assertIn(str(path), error.exception.cmd)
+                self.assertEqual(error.exception.cmd[0], "shellcheck")
+                self.assertIn(b"SC107", error.exception.stdout + error.exception.stderr)
+                path.unlink()
+
+    def test_new_python_sources_still_fail_syntax_validation(self):
+        self.project_fixture()
+        (self.root / "scripts/new-source.py").write_text("if then\n")
+        with self.assertRaises(SyntaxError):
+            CHECK.main()
+
+    def test_new_markdown_links_still_fail_validation(self):
+        self.project_fixture()
+        (self.root / "new-source.md").write_text("[Missing](missing-source-file)\n")
+        with self.assertRaisesRegex(SystemExit, "new-source.md: broken link"):
+            CHECK.main()

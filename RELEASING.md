@@ -58,10 +58,14 @@ source release tag. PR and scheduled jobs never publish packages.
 
 ## Woodpecker validation
 
-[The Woodpecker contract](specs/003-woodpecker-validation/spec.md) runs the locked
-Linux `devenv test` on the shared CI site, without publishing credentials or host
-mounts. During rollout, require the native current-head result as well as the
-existing applicable GitHub checks. Preserve Python compatibility, macOS, Docker,
-and publishing coverage; retire duplicate Linux native work only after genuine
-PR and main success. Check the actual merged-main pipeline before declaring
-rollout complete. No product release is part of this automation change.
+The locked Linux native `devenv test` runs on Woodpecker. Require the native
+current-head result along with every applicable hosted check. GitHub retains
+macOS native validation and actual Linux Docker development/devcontainer
+acceptance. Python compatibility, Docker runtime, Pages and GHCR coverage remain on their
+existing hosted contracts. Verify the genuine merged-main native pipeline
+before declaring delivery complete. Recover through a corrective or revert PR.
+
+Woodpecker image references require monthly manual review and review after
+security releases; existing dependency automation does not discover them.
+Updates need an immutable reference and actual native execution. No product
+version, tag, or release is created by this automation maintenance.
