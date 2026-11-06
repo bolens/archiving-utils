@@ -70,6 +70,7 @@ jobs:
       - name: Install pinned devenv
         run: nix profile install github:cachix/devenv/42246161fa3bf7cd18f8334d08c73d6aaa8762d3
       - name: Validate native development environment
+        if: runner.os == 'macOS'
         run: devenv test
       - name: Validate Docker development image
         if: runner.os == 'Linux'

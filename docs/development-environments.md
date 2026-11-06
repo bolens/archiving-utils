@@ -49,3 +49,9 @@ container on either `ci01` (Bamboo) or `ci02` (Grove). The job has no publishing
 credentials, privileged mode, host Docker socket, or host Nix store. See the
 [validation contract](../specs/003-woodpecker-validation/spec.md) and
 [delivery playbook](../RELEASING.md) for acceptance and hosted-check coexistence.
+
+The Linux native gate now runs on Woodpecker; GitHub retains macOS and actual
+Docker acceptance. Devcontainer-only edits select a hosted build of the actual
+Dockerfile and an isolated setup smoke. A native Nix success alone does not prove
+a devcontainer update works. Review Woodpecker image pins monthly and after
+security releases; update through a reviewed PR with native evidence.
