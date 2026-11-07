@@ -58,7 +58,10 @@ source release tag. PR and scheduled jobs never publish packages.
 
 ## Woodpecker validation
 
-The locked Linux native `devenv test` runs on Woodpecker. Require the native
+The locked Linux native `devenv test`, explicit Python 3.11/3.14 compatibility
+lanes and pinned source/workflow policy run on Woodpecker. See the
+[transition contract](docs/woodpecker-transition.md) for required backends,
+log evidence and retained hosted authority. Require the native
 current-head result along with every applicable hosted check. GitHub retains
 macOS native validation and actual Linux Docker development/devcontainer
 acceptance. Python compatibility, Docker runtime, Pages and GHCR coverage remain on their

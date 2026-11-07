@@ -47,6 +47,7 @@ runtime proof. A topic without an implementation stays explicitly unimplemented.
 - [Tool catalog](catalog.md)
 - [CLI contract](cli.md)
 - [Development environments](development-environments.md)
+- [Woodpecker compatibility checks](woodpecker-transition.md)
 - [Docker](docker.md)
 - [Formats and limits](formats.md)
 - [MCP server](mcp.md)
