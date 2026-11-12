@@ -38,14 +38,17 @@ Fleet policy: <https://github.com/bolens/.github/blob/main/RELEASING.md>.
 
 ## Source lint
 
-The Source lint workflow checks maintained python, javascript, css files selected by
-[`.github/source-lint.json`](.github/source-lint.json) on every pull request
-and push to `main`. Existing native checks remain part of the merge gate.
+Woodpecker's `source-and-workflow-policy` step checks maintained Python, JavaScript and CSS selected by
+[`.github/source-lint.json`](.github/source-lint.json). The duplicate hosted
+[Source lint workflow](.github/workflows/source-lint.yml) and its required context
+are retired. Keep `ci/woodpecker/pr/woodpecker` and every retained current-head
+check required; the [CI index](docs/woodpecker-transition.md) maps local commands
+and native ownership.
+
 Use the [shared local reproduction instructions](https://github.com/bolens/.github/blob/7603518f305fb76f7bb1b9979f2692521f633b82/docs/source-lint.md)
-with the same tooling revision pinned in
-[the workflow](.github/workflows/source-lint.yml). Review exclusions when adding
-source files; generated and imported files retain their native validation.
-Require the new check to pass on the current PR head before merging.
+with the pinned tooling revision. Review exclusions when adding source files;
+generated and imported files retain their native validation. Retained platform,
+artifact, deployment and release checks keep their existing authority.
 
 ## Container delivery
 
